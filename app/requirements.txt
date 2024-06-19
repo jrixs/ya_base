@@ -1,0 +1,13 @@
+asgiref
+backports.zoneinfo
+Django
+django-cors-headers
+mccabe
+psycopg2-binary
+pycodestyle
+pyflakes
+python-dotenv
+split-settings
+sqlparse
+typing-extensions
+uWSGI

@@ -1,0 +1,91 @@
+version: '3.4'
+services:
+  db:
+    container_name: db_movies
+    image: postgres:15
+    volumes:
+      - ./app/db_pass:/run/secrets/db_pass:ro
+      - dbdata:/var/lib/postgresql/data
+      - ./backup.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      PGDATA: /var/lib/postgresql/data/movies_database
+      POSTGRES_DB: movies_database
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_pass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 3s
+    expose:
+      - "5432"
+    networks:
+      - appnetwork
+    restart: unless-stopped
+
+  app:
+    container_name: app_movies
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    networks:
+      - appnetwork
+    restart: unless-stopped
+
+  nginx:
+    container_name: web_movies
+    image: nginx:1.25.5
+    volumes:
+      - ./nginx_conf/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx_conf/site:/etc/nginx/conf.d:ro
+      - ./data:/data/:ro
+      - nginx_log:/var/log/nginx/
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    networks:
+      - appnetwork
+    restart: unless-stopped
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:8.6.2
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    command: ["elasticsearch", "-Ecluster.name=my_cluster", "-Enode.name=my_node"]
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+    depends_on:
+      - nginx
+    networks:
+      - appnetwork
+    restart: unless-stopped
+
+  etl:  
+    container_name: etl_movies
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+      - elasticsearch
+    networks:
+      - appnetwork
+    restart: unless-stopped
+   
+networks:
+  appnetwork:
+    driver: bridge
+
+volumes:
+  dbdata:
+  esdata:
+  nginx_log:

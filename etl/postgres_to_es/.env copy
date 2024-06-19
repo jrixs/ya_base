@@ -1,0 +1,11 @@
+# DATABASE
+DEBUG=True
+DB_NAME=movies_database
+DB_USER=app
+DB_PASSWORD=
+DB_HOST=db
+DB_SCHEME=content
+# ES
+ES_HOST=http://elasticsearch:9200
+ES_LOGS=./
+MAX_LINE=50

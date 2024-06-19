@@ -1,0 +1,4 @@
+.env
+db_pass
+requirements_local.txt
+__pycache__

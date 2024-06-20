@@ -22,8 +22,8 @@ RUN mkdir -p /var/www/static/ &&\
     groupadd -r app && useradd -r -g app app && chown app:app -R /app
 
 COPY requirements.txt requirements.txt
-RUN python3.8 -m pip install --upgrade pip &&\
-    python3.8 -m pip install -r requirements.txt
+RUN python3.8 -m pip install --no-cache-dir --upgrade pip &&\
+    python3.8 -m pip install --no-cache-dir -r requirements.txt
 
 USER app:app
 

@@ -80,7 +80,76 @@ services:
     networks:
       - appnetwork
     restart: unless-stopped
-   
+
+  redis:
+    container_name: redis_movies
+    image: redis:7.2.5
+    networks:
+      - appnetwork
+    restart: unless-stopped
+  
+  # Прод версия
+  # backend1: &base-backend
+  #   container_name: backend_movies1
+  #   build:
+  #     context: ./fastapi
+  #     dockerfile: Dockerfile_dev
+  #   depends_on:
+  #     - redis
+  #     - elasticsearch
+  #   networks:
+  #     - appnetwork
+  #   expose:
+  #     - 8081/tcp
+  #   command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8081", "--workers", "3"]
+  #   restart: unless-stopped
+
+  # backend2: 
+  #   <<: *base-backend
+  #   container_name: backend_movies2
+  #   expose:
+  #     - 8082/tcp
+  #   command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8082", "--workers", "3"]
+
+  # backend3: 
+  #   <<: *base-backend
+  #   container_name: backend_movies3
+  #   expose:
+  #     - 8083/tcp
+  #   command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8083", "--workers", "3"]
+
+  # во время разработки
+  backend1: &base-backend
+    container_name: backend_movies1
+    build:
+      context: ./fastapi
+      dockerfile: Dockerfile_dev
+    volumes:
+      - ./fastapi/src:/src
+    depends_on:
+      - redis
+      - elasticsearch
+    networks:
+      - appnetwork
+    expose:
+      - 8081/tcp
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8081", "--reload"]
+    restart: unless-stopped
+
+  backend2: 
+    <<: *base-backend
+    container_name: backend_movies2
+    expose:
+      - 8082/tcp
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8081", "--reload"]
+
+  backend3: 
+    <<: *base-backend
+    container_name: backend_movies3
+    expose:
+      - 8083/tcp
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8081", "--reload"]
+
 networks:
   appnetwork:
     driver: bridge

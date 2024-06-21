@@ -1,7 +1,7 @@
 from etl.load import bulk_load
 
 
-def datasort(data) -> dict:
+def datasort_filmwork(data) -> dict:
     try_keys = ("id", "imdb_rating", "genres", "title", "description",
                 "directors_names", "actors_names", "writers_names",
                 "directors", "actors", "writers")
@@ -67,17 +67,56 @@ def datasort(data) -> dict:
     return ret_data
 
 
-def transform_filmwork(data):
-    result = []
-    data = [__ for _ in data for __ in _]
-    data = datasort(data)
+def datasort_genres(data) -> dict:
+    try_keys = ("id", "genre", "films")
+    ret_data = {}
 
+    for line in data:
+        id = line['g_id']
+
+        if id in ret_data:
+            if line['fw_id'] not in [_['id'] for _ in ret_data[id]['films']]:
+                ret_data[id]['films'].append({
+                    'id': line['fw_id'],
+                    'title': line['title'],
+                    'imdb_rating': line['rating']
+                })
+        else:
+            id = line['g_id']
+            line = dict(line)
+            line['id'] = id
+            line['genre'] = line['genre']
+            line['films'] = [{
+                'id': line['fw_id'],
+                'title': line['title'],
+                'imdb_rating': line['rating']
+            }]
+
+            line = {k: v for k, v in line.items() if k in try_keys}
+
+            ret_data[id] = line
+
+    return ret_data
+
+
+def send_to_es(index_name: str, data: dict) -> bool:
+    result: list = []
     for uuid in data:
         result.append({
             "index": {
-                "_index": "movies",
+                "_index": index_name,
                 "_id": uuid
                 }})
         result.append(data[uuid])
-
     return bulk_load(result)
+
+
+def transform_filmwork(data):
+    data = [__ for _ in data for __ in _]
+    data_filmwork = datasort_filmwork(data)
+    data_ganres = datasort_genres(data)
+
+    return all([
+        send_to_es(index_name='movies', data=data_filmwork),
+        send_to_es(index_name='genres', data=data_ganres)
+    ])

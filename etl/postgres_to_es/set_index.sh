@@ -119,3 +119,59 @@ curl -XPUT http://elasticsearch:9200/movies -H 'Content-Type: application/json' 
     }
   }
 }'
+
+curl -XPUT http://elasticsearch:9200/genres -H 'Content-Type: application/json' -d'
+{
+  "settings": {
+    "refresh_interval": "1s",
+    "analysis": {
+      "filter": {
+        "english_stemmer": {
+          "type": "stemmer",
+          "language": "english"
+        },
+        "russian_stemmer": {
+          "type": "stemmer",
+          "language": "russian"
+        }
+      },
+      "analyzer": {
+        "ru_en": {
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "english_stemmer",
+            "russian_stemmer"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "genre": {
+        "type": "keyword"
+      },
+      "films": {
+        "type": "nested",
+        "dynamic": "strict",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "title": {
+            "type": "text",
+            "analyzer": "ru_en"
+          },
+          "imdb_rating": {
+            "type": "float"
+          }
+        }
+      }
+    }
+  }
+}'

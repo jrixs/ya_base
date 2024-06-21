@@ -38,4 +38,4 @@ async def shutdown():
 
 # Подключаем роутер к серверу, указав префикс /v1/films
 # Теги указываем для удобства навигации по документации
-app.include_router(films.router, prefix='/api/v1/films1', tags=['films'])
+app.include_router(films.router, prefix='/api/v1/films', tags=['films'])

@@ -48,6 +48,7 @@ fw.modified,
 pfw.role,
 p.id,
 p.full_name,
+g.id as g_id,
 g.name as genre
 FROM content.filmwork fw
 LEFT JOIN content.person_film_work pfw ON pfw.film_work_id = fw.id

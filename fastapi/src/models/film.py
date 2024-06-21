@@ -30,3 +30,18 @@ class Person(BaseModel):
     gender: str
     created: datetime
     modified: datetime
+
+# Модель для связи между фильмами и жанрами
+class GenreFilmWork(BaseModel):
+    id: str
+    film_work_id: str
+    genre_id: str
+    created: datetime
+
+# Модель для связи между фильмами и людьми (актеры, сценаристы, режиссеры)
+class PersonFilmWork(BaseModel):
+    id: str
+    film_work_id: str
+    person_id: str
+    role: str
+    created: datetime

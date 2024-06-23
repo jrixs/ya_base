@@ -3,21 +3,6 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-try_keys = (
-    "id",
-    "imdb_rating",
-    "genres",
-    "title",
-    "description",
-    "directors_names",
-    "actors_names",
-    "writers_names",
-    "directors",
-    "actors",
-    "writers",
-)
-
-
 # Модель для фильмов
 class Film(BaseModel):
     id: str

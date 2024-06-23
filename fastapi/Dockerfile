@@ -13,3 +13,5 @@ RUN python3.8 -m pip install --no-cache-dir --upgrade pip &&\
 USER backend:backend
 
 COPY ./src .
+
+ENTRYPOINT ["python", "run_buckend.py"]

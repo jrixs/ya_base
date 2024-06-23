@@ -8,5 +8,4 @@ COPY src/requirements.txt requirements.txt
 RUN python3.8 -m pip install --no-cache-dir --upgrade pip &&\
     python3.8 -m pip install --no-cache-dir -r requirements.txt
 
-
-
+ENTRYPOINT ["python", "run_buckend.py"]

@@ -14,4 +14,4 @@ USER backend:backend
 
 COPY ./src .
 
-ENTRYPOINT ["python", "run_buckend.py"]
+ENTRYPOINT ["python", "run_backend.py"]

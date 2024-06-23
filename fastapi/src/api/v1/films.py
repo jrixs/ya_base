@@ -3,25 +3,11 @@ from http import HTTPStatus
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
-from services.film import FilmService, get_film_service
+from services.film import FilmService, get_film_service, Film
 
 from datetime import datetime, date
 
 router = APIRouter()
-
-
-class Film(BaseModel):
-    id: str
-    imdb_rating: Optional[float] = None
-    genres: Optional[List[str]] = None
-    title: Optional[str] = None
-    directors_names: Optional[List[str]] = None
-    actors_names: Optional[List[str]] = None
-    writers_names: Optional[List[str]] = None
-    directors: Optional[List[dict]] = None
-    actors: Optional[List[dict]] = None
-    writers: Optional[List[dict]] = None
-
 
 # Внедряем FilmService с помощью Depends(get_film_service)
 @router.get("/{film_id}", response_model=Film)
@@ -34,18 +20,7 @@ async def film_details(
             status_code=HTTPStatus.NOT_FOUND, detail="Film not found"
         )
 
-    return Film(
-        id=film.id,
-        imdb_rating=film.imdb_rating,
-        genres=film.genres,
-        title=film.title,
-        directors_names=film.directors_names,
-        actors_names=film.actors_names,
-        writers_names=film.writers_names,
-        directors=film.directors,
-        actors=film.actors,
-        writers=film.writers,
-    )
+    return film
 
 
 # Добавляем эндпоинт для получения списка фильмов

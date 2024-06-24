@@ -1,12 +1,25 @@
-from datetime import datetime
-from typing import List, Optional
 from pydantic import BaseModel
+from typing import List
 
 
-# Модель для людей (актеров, сценаристов, режиссеров) ИЗМЕНИТСЯ
+class Persons_items(BaseModel):
+    id: str
+    full_name: str
+
+
+class Person_items(BaseModel):
+    id: str
+    title: str
+    imdb_rating: float
+
+
+# Список всех жанров
+class Persons(BaseModel):
+    persons: List[Persons_items]
+
+
+# Информация по одному жанру
 class Person(BaseModel):
     id: str
     full_name: str
-    gender: str
-    created: datetime
-    modified: datetime
+    films: List[Person_items]

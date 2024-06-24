@@ -50,42 +50,58 @@ class GenreService(Base):
 
 class GenresService(Base):
 
-    async def get_genres(self) -> Optional[Genres]:
-        ganres = await self._genres_from_cache()
+    async def get_genres(self, filtr: str = '') -> Optional[Genres]:
+        ganres = await self._genres_from_cache(filtr)
         if not ganres:
-            ganres = await self._get_genres_from_elastic()
+            ganres = await self._get_genres_from_elastic(filtr)
             if not ganres:
                 return None
-            await self._put_genres_to_cache(ganres)
+            await self._put_genres_to_cache(filtr, ganres)
         return ganres
 
-    async def _get_genres_from_elastic(self) -> Optional[Genres]:
+    async def _get_genres_from_elastic(self, filtr: str) -> Optional[Genres]:
+        if filtr:
+            order = "desc" if filtr.startswith('-') else "asc"
+        else:
+            order = None
+
         body = {
             "_source": ["id", "genre"],
             "size": 100,
             "query": {
-                "match_all": {}
-            }
+                "bool": {
+                    "must": [{"match": {"genre": filtr}}] if filtr else [{"match_all": {}}]
+                }
+            },
+            "sort": [
+                {"genre.keyword": {"order": order}} if order else {}
+            ]
         }
+
+        data = {'genres': []}
 
         try:
             doc = await self.elastic.search(index='genres', body=body,
                                             scroll='1m')
+            while len(doc['hits']['hits']):
+                data['genres'].extend([hit['_source'] for hit in doc['hits']['hits']])
+                scroll_id = doc['_scroll_id']
+                doc = await self.elastic.scroll(scroll_id=scroll_id, scroll='1m')
+
         except NotFoundError:
             return None
-        data = {'genres': [_['_source'] for _ in doc['hits']['hits']]}
         return Genres(**data)
 
-    async def _genres_from_cache(self) -> Optional[Genres]:
-        data = await self.redis.get('ganres')
+    async def _genres_from_cache(self, filtr: str) -> Optional[Genres]:
+        data = await self.redis.get(f'{filtr}_ganres')
         if not data:
             return None
         ganre = Genres.parse_raw(data)
         return ganre
 
-    async def _put_genres_to_cache(self, ganres: Genres):
+    async def _put_genres_to_cache(self, filtr: str, ganres: Genres):
         await self.redis.set(
-            'ganres', ganres.json(), FILM_CACHE_EXPIRE_IN_SECONDS
+            f'{filtr}_ganres', ganres.json(), FILM_CACHE_EXPIRE_IN_SECONDS
             )
 
 

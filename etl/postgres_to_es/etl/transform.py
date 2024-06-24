@@ -103,7 +103,6 @@ def datasort_persons(data) -> dict:
     ret_data = {}
     for line in data:
         if line['role'] is not None:
-            print(line['id'])
             id = line['id']
 
             if id in ret_data:

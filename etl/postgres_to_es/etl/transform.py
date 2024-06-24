@@ -98,6 +98,38 @@ def datasort_genres(data) -> dict:
 
     return ret_data
 
+def datasort_persons(data) -> dict:
+    try_keys = ("id", "full_name", "films")
+    ret_data = {}
+    for line in data:
+        if line['role'] is not None:
+            print(line['id'])
+            id = line['id']
+
+            if id in ret_data:
+                if line['fw_id'] not in [_['id'] for _ in ret_data[id]['films']]:
+                    ret_data[id]['films'].append({
+                        'id': line['fw_id'],
+                        'title': line['title'],
+                        'imdb_rating': line['rating']
+                    })
+            else:
+                id = line['id']
+                line = dict(line)
+                line['id'] = id
+                line['full_name'] = line['full_name']
+                line['films'] = [{
+                    'id': line['fw_id'],
+                    'title': line['title'],
+                    'imdb_rating': line['rating']
+                }]
+
+                line = {k: v for k, v in line.items() if k in try_keys}
+
+                ret_data[id] = line
+
+    return ret_data
+
 
 def send_to_es(index_name: str, data: dict) -> bool:
     result: list = []
@@ -114,9 +146,11 @@ def send_to_es(index_name: str, data: dict) -> bool:
 def transform_filmwork(data):
     data = [__ for _ in data for __ in _]
     data_filmwork = datasort_filmwork(data)
-    data_ganres = datasort_genres(data)
+    data_genres = datasort_genres(data)
+    data_persons = datasort_persons(data)
 
     return all([
         send_to_es(index_name='movies', data=data_filmwork),
-        send_to_es(index_name='genres', data=data_ganres)
+        send_to_es(index_name='genres', data=data_genres), 
+        send_to_es(index_name='persons', data=data_persons)
     ])

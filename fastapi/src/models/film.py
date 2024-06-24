@@ -23,4 +23,3 @@ class AllFilms(BaseModel):
     imdb_rating: Optional[float]
     genres: Optional[List[str]]
     title: Optional[str]
-    writers_names: Optional[List[str]]

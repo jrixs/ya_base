@@ -18,8 +18,13 @@ class Film(BaseModel):
     writers: Optional[List[dict]]
 
 
-class AllFilms(BaseModel):
+# Модель для всех фильмов
+class AllFilmsBase(BaseModel):
     id: str
     imdb_rating: Optional[float]
     genres: Optional[List[str]]
     title: Optional[str]
+
+
+class AllFilms(BaseModel):
+    movies: List[AllFilmsBase]

@@ -28,22 +28,29 @@ async def film_details(
     return film
 
 
-# Все фильмы
 @router.get("/", response_model=AllFilms)
 async def films(
     films_service: FilmsService = Depends(get_films_service),
     order_by: Optional[str] = Query(
-        None, title="Order_by", description="sort"
+        None, title="Сортировка", description="Сортировка фильмов"
     ),
     search: Optional[str] = Query(
-        None, title="Search", description="Full text search"
+        None, title="Поиск", description="Полнотекстовый поиск"
+    ),
+    page: int = Query(1, title="Страница", description="Номер страницы", ge=1),
+    page_size: int = Query(
+        10,
+        title="Размер страницы",
+        description="Количество элементов на странице",
+        ge=1,
+        le=100,
     ),
 ) -> AllFilms:
-
-    films = await films_service.get_films(filtr=order_by, search=search)
+    films = await films_service.get_films(
+        filtr=order_by, search=search, page=page, page_size=page_size
+    )
     if not films:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="films not found"
+            status_code=HTTPStatus.NOT_FOUND, detail="Фильмы не найдены"
         )
-
     return films

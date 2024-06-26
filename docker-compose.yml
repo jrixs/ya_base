@@ -56,8 +56,6 @@ services:
     image: elasticsearch:8.6.2
     volumes:
       - esdata:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
     command: ["elasticsearch", "-Ecluster.name=my_cluster", "-Enode.name=my_node"]
     environment:
       - xpack.security.enabled=false
@@ -90,14 +88,11 @@ services:
   
   backend1: &base-backend
     container_name: backend_movies1
-    # в прод удалить volumes и выбрать Dockerfile
     build:
       context: ./fastapi
-      dockerfile: Dockerfile_dev
+      dockerfile: Dockerfile
     environment:
       - PORT=8081
-    volumes:
-      - ./fastapi/src:/src
     depends_on:
       - redis
       - elasticsearch

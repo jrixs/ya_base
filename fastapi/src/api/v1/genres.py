@@ -1,16 +1,18 @@
 from http import HTTPStatus
-from fastapi import APIRouter, Depends, HTTPException, Query
-from models.genre import Genre, Genres
-from services.genre import GenreService, get_genre_service
-from services.genre import GenresService, get_genres_service
 from typing import Optional
+
+from models.genre import Genre, Genres
+from services.genre import (GenreService, GenresService, get_genre_service,
+                            get_genres_service)
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 # Объект router, в котором регистрируем обработчики
 router = APIRouter()
 
 
 # Информация о жанре
-@router.get('/{ganre_id}', response_model=Genre)
+@router.get('/{genre_id}', response_model=Genre)
 async def ganre_details(
     genre_id: str,
     genre_service: GenreService = Depends(get_genre_service)

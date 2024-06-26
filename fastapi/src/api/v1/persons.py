@@ -1,9 +1,11 @@
 from http import HTTPStatus
-from fastapi import APIRouter, Depends, HTTPException, Query
-from models.person import Person, Persons
-from services.person import PersonService, get_person_service
-from services.person import PersonsService, get_persons_service
 from typing import Optional
+
+from models.person import Person, Persons
+from services.person import (PersonService, PersonsService, get_person_service,
+                             get_persons_service)
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 # Объект router, в котором регистрируем обработчики
 router = APIRouter()
@@ -28,10 +30,20 @@ async def person_details(
 @router.get('/', response_model=Persons)
 async def persons(
     persons_service: PersonsService = Depends(get_persons_service),
-    name: Optional[str] = Query(None, title="Name Filter", description="Filter persons by name")
+    name: Optional[str] = Query(None, title="Сортировка",
+                                description="Частичный поиск"),
+    page: int = Query(1, title="Страница", description="Номер страницы", ge=1),
+    page_size: int = Query(
+        10,
+        title="Размер страницы",
+        description="Количество элементов на странице",
+        ge=1,
+        le=100,
+    )
 ) -> Persons:
 
-    persons = await persons_service.get_persons(name=name)
+    persons = await persons_service.get_persons(name=name, page=page,
+                                                page_size=page_size)
     if not persons:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
                             detail='ganres not found')

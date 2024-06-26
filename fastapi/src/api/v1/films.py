@@ -1,15 +1,10 @@
 from http import HTTPStatus
+from typing import Optional
+
+from services.film import (AllFilms, Film, FilmService, FilmsService,
+                           get_film_service, get_films_service)
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Optional
-from services.film import (
-    FilmService,
-    FilmsService,
-    get_film_service,
-    get_films_service,
-    Film,
-    AllFilms,
-)
 
 router = APIRouter()
 

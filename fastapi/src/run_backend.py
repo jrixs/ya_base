@@ -14,6 +14,5 @@ if __name__ == '__main__':
         port=port,
         log_config=LOGGING,
         log_level=logging.DEBUG,
-        reload=True,
-        # workers=3
+        workers=3
     )

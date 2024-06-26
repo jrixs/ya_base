@@ -50,16 +50,20 @@ class PersonService(Base):
 
 class PersonsService(Base):
 
-    async def get_persons(self, name: str = '') -> Optional[Persons]:
-        persons = await self._persons_from_cache(name)
+    async def get_persons(self, page: int, page_size: int, 
+                          name: str = '') -> Optional[Persons]:
+        persons = await self._persons_from_cache(name, page, page_size)
         if not persons:
-            persons = await self._get_persons_from_elastic(name)
+            persons = await self._get_persons_from_elastic(
+                name, page, page_size)
             if not persons:
                 return None
-            await self._put_persons_to_cache(name, persons)
+            await self._put_persons_to_cache(name, persons,
+                                             page, page_size)
         return persons
 
-    async def _get_persons_from_elastic(self, name: str) -> Optional[Persons]:
+    async def _get_persons_from_elastic(self, name: str, page: int,
+                                        page_size: int) -> Optional[Persons]:
 
         if name:
             order = "desc" if name.startswith('-') else "asc"
@@ -68,40 +72,37 @@ class PersonsService(Base):
 
         body = {
             "_source": ["id", "full_name"],
-            "size": 100,
-            "query": {
-                "bool": {
-                    "must": [{"match": {"full_name": name}}] if name else [{"match_all": {}}]
+            "query": {"bool": {
+                "must": [{"match": {
+                    "full_name": name}}] if name else [{"match_all": {}}]
                 }
             },
-            "sort": [
-                {"full_name.keyword": {"order": order}} if order else {}
-            ]
+            "sort": [{"full_name.keyword": {"order": order}} if order else {}],
+            "size": page_size,
+            "from": (page - 1) * page_size,
         }
 
-        data = {'persons': []}
         try:
-            doc = await self.elastic.search(index='persons', body=body,
-                                            scroll='1m')
-            while len(doc['hits']['hits']):
-                data['persons'].extend([hit['_source'] for hit in doc['hits']['hits']])
-                scroll_id = doc['_scroll_id']
-                doc = await self.elastic.scroll(scroll_id=scroll_id, scroll='1m')
+            doc = await self.elastic.search(index='persons', body=body)
+            data = {'persons': [hit['_source'] for hit in doc['hits']['hits']]}
         except NotFoundError:
             return None
 
         return Persons(**data)
 
-    async def _persons_from_cache(self, name: str) -> Optional[Persons]:
-        data = await self.redis.get(f'{name}_persons')
+    async def _persons_from_cache(self, name: str, page: int,
+                                  page_size: int) -> Optional[Persons]:
+        data = await self.redis.get(f'{name}_{page}_{page_size}_persons')
         if not data:
             return None
         persons = Persons.parse_raw(data)
         return persons
 
-    async def _put_persons_to_cache(self, name: str, persons: Persons):
+    async def _put_persons_to_cache(self, name: str, persons: Persons,
+                                    page: int, page_size: int):
         await self.redis.set(
-            f'{name}_persons', persons.json(), FILM_CACHE_EXPIRE_IN_SECONDS
+            f'{name}_{page}_{page_size}_persons',
+            persons.json(), FILM_CACHE_EXPIRE_IN_SECONDS
             )
 
 

@@ -37,7 +37,7 @@ class GenreService(Base):
         return Genre(**doc['_source'])
 
     async def _genre_from_cache(self, genre_id: str) -> Optional[Genre]:
-        data = await self.redis.get(genre_id)
+        data = await self.redis.get(f"genre:{genre_id}")
         if not data:
             return None
         genre = Genre.parse_raw(data)
@@ -45,7 +45,7 @@ class GenreService(Base):
 
     async def _put_genre_to_cache(self, genre: Genre):
         await self.redis.set(
-            genre.id, genre.json(), FILM_CACHE_EXPIRE_IN_SECONDS
+            f"genre:{genre.id}", genre.json(), FILM_CACHE_EXPIRE_IN_SECONDS
             )
 
 

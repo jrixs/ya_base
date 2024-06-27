@@ -3,12 +3,12 @@ from typing import List
 from pydantic import BaseModel
 
 
-class Genres_items(BaseModel):
+class GenresItems(BaseModel):
     id: str
     genre: str
 
 
-class Genre_items(BaseModel):
+class GenreItems(BaseModel):
     id: str
     title: str
     imdb_rating: float
@@ -16,11 +16,11 @@ class Genre_items(BaseModel):
 
 # Список всех жанров
 class Genres(BaseModel):
-    genres: List[Genres_items]
+    genres: List[GenresItems]
 
 
 # Информация по одному жанру
 class Genre(BaseModel):
     id: str
     genre: str
-    films: List[Genre_items]
+    films: List[GenreItems]

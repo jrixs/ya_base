@@ -3,7 +3,7 @@ import uvicorn
 import os
 from core.logger import LOGGING
 
-port = int(os.getenv('PORT'))
+port = 8081
 
 
 if __name__ == '__main__':
@@ -14,5 +14,5 @@ if __name__ == '__main__':
         port=port,
         log_config=LOGGING,
         log_level=logging.DEBUG,
-        workers=3
+        reload=True
     )

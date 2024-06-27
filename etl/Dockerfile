@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.12-slim
 VOLUME /etl:rw
 WORKDIR /etl
 
@@ -15,11 +15,11 @@ RUN apt-get update &&\
 RUN groupadd -r app && useradd -r -g app app && chown app:app -R /etl && chmod 777 -R /etl
 
 COPY requirements.txt requirements.txt
-RUN python3.8 -m pip install --no-cache-dir --upgrade pip &&\
-    python3.8 -m pip install --no-cache-dir -r requirements.txt
+RUN python3.12 -m pip install --no-cache-dir --upgrade pip &&\
+    python3.12 -m pip install --no-cache-dir -r requirements.txt
 
 USER app:app
 
 COPY ./postgres_to_es .
 
-CMD /bin/sh set_index.sh && python3.8 etl_start.py
+CMD /bin/sh set_index.sh && python3.12 etl_start.py

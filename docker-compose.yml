@@ -91,8 +91,6 @@ services:
     build:
       context: ./fastapi
       dockerfile: Dockerfile
-    environment:
-      - PORT=8081
     depends_on:
       - redis
       - elasticsearch
@@ -101,22 +99,21 @@ services:
     expose:
       - 8081/tcp
     restart: unless-stopped
+    command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8081 --log-config /src/core/logger --log-level info main:app
 
   backend2: 
     <<: *base-backend
     container_name: backend_movies2
-    environment:
-      - PORT=8082
     expose:
       - 8082/tcp
+    command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8082 --log-config /src/core/logger --log-level info main:app
 
   backend3: 
     <<: *base-backend
     container_name: backend_movies3
-    environment:
-      - PORT=8083
     expose:
       - 8083/tcp
+    command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8083 --log-config /src/core/logger --log-level info main:app
 
 networks:
   appnetwork:

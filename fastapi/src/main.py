@@ -1,5 +1,5 @@
 from api.v1 import films, genres, persons
-from core import config
+from core.config import settings
 from db import elastic, redis
 from elasticsearch import AsyncElasticsearch
 from fastapi.responses import ORJSONResponse
@@ -9,7 +9,7 @@ from fastapi import FastAPI
 
 app = FastAPI(
     # Конфигурируем название проекта. Оно будет отображаться в документации
-    title=config.PROJECT_NAME,
+    title=settings.project_name,
     # Адрес документации в красивом интерфейсе
     docs_url='/api/openapi',
     # Адрес документации в формате OpenAPI
@@ -20,16 +20,17 @@ app = FastAPI(
 )
 
 
-@app.on_event('startup')
+@app.router.on_startup.append
 async def startup():
     # Подключаемся к базам при старте сервера
     # Подключиться можем при работающем event-loop
     # Поэтому логика подключения происходит в асинхронной функции
-    redis.redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT)
-    elastic.es = AsyncElasticsearch(hosts=[f'{config.ELASTIC_SCHEMA}{config.ELASTIC_HOST}:{config.ELASTIC_PORT}'])
+    redis.redis = Redis(host=settings.redis_host, port=settings.redis_port)
+    elastic.es = AsyncElasticsearch(
+        hosts=[f'{settings.elastic_schema}{settings.elastic_host}:{settings.elastic_port}'])
 
 
-@app.on_event('shutdown')
+@app.router.on_shutdown.append
 async def shutdown():
     # Отключаемся от баз при выключении сервера
     await redis.redis.close()

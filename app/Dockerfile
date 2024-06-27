@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.12-slim
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -22,8 +22,8 @@ RUN mkdir -p /var/www/static/ &&\
     groupadd -r app && useradd -r -g app app && chown app:app -R /app
 
 COPY requirements.txt requirements.txt
-RUN python3.8 -m pip install --no-cache-dir --upgrade pip &&\
-    python3.8 -m pip install --no-cache-dir -r requirements.txt
+RUN python3.12 -m pip install --no-cache-dir --upgrade pip &&\
+    python3.12 -m pip install --no-cache-dir -r requirements.txt
 
 USER app:app
 

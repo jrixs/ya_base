@@ -1,0 +1,132 @@
+version: '3.4'
+services:
+
+  tests:
+    image: python:3.12-slim
+    environment:
+      - ELASTIC_HOST=http://elasticsearch:9200
+      - REDIS_HOST=redis
+      - SERVICE_URL=http://nginx
+      - ELASTIC_INDEX_MOVIES=movies
+      - ELASTIC_ID_FIELD_MOVIES=id
+      - ELASTIC_MAPPINGS="/tests/testdata/mappings_movies.json"
+    volumes:
+      - ./tests:/tests
+    entrypoint: >
+        sh -c "python -m pip install --no-cache-dir --upgrade pip
+        && python -m pip install -r /tests/functional/requirements.txt
+        && python /tests/functional/utils/wait_for_es.py
+        && python /tests/functional/utils/wait_for_redis.py
+        && pytest /tests/functional/src"
+    networks:
+      - appnetwork
+
+networks:
+  appnetwork:
+    driver: bridge
+
+# запуск тестов
+# sudo docker-compose -f docker-compose.yml -f tests/functional/docker-compose.yml up --abort-on-container-exit
+
+# .
+# tests
+# ├── functional
+# │   ├── __init__.py
+# │   ├── conftest.py
+# │   ├── docker-compose.yml
+# │   ├── requirements.txt
+# │   ├── settings.py
+# │   ├── src
+# │   │   ├── __init__.py
+# │   │   ├── test_film.py
+# │   │   └── test_search.py
+# │   ├── testdata
+# │   │   ├── __init__.py
+# │   │   └── es_mapping.py
+# │   └── utils
+# │       ├── __init__.py
+# │       ├── helpers.py
+# │       ├── wait_for_es.py
+# │       └── wait_for_redis.py
+# └── __init__.py 
+# docker-compose.yml
+
+
+# Для экшен github
+# name: Run Tests
+
+# on:
+#   pull_request:
+#     branches: [ main ]
+
+# jobs:
+#   build-and-test:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - uses: actions/checkout@v2
+
+#     - name: Set up Docker Buildx
+#       uses: docker/setup-buildx-action@v1
+
+#     - name: Cache Docker layers
+#       uses: actions/cache@v2
+#       with:
+#         path: /tmp/.buildx-cache
+#         key: ${{ runner.os }}-buildx-${{ github.sha }}
+#         restore-keys: |
+#           ${{ runner.os }}-buildx-
+
+#     - name: Build and push Docker images
+#       uses: docker/build-push-action@v2
+#       with:
+#         context: .
+#         file: ./Dockerfile
+#         push: false
+#         load: true
+#         tags: your-repo-name:latest
+#         cache-from: type=local,src=/tmp/.buildx-cache
+#         cache-to: type=local,dest=/tmp/.buildx-cache
+
+#     - name: Run tests with docker-compose
+#       run: |
+#        docker-compose -f docker-compose.yml -f tests/functional/docker-compose.yml up --exit-code-from test-runner
+
+# name: Run Functional Tests
+
+# on:
+#   pull_request:
+#     branches: [ main ]
+
+# jobs:
+#   functional-test:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - uses: actions/checkout@v2
+
+#     - name: Set up Docker Buildx
+#       uses: docker/setup-buildx-action@v1
+
+#     - name: Cache Docker layers
+#       uses: actions/cache@v2
+#       with:
+#         path: /tmp/.buildx-cache
+#         key: ${{ runner.os }}-buildx-${{ github.sha }}
+#         restore-keys: |
+#           ${{ runner.os }}-buildx-
+
+#     - name: Build and push Docker images
+#       uses: docker/build-push-action@v2
+#       with:
+#         context: .
+#         file: ./Dockerfile
+#         push: false
+#         load: true
+#         tags: your-repo-name:latest
+#         cache-from: type=local,src=/tmp/.buildx-cache
+#         cache-to: type=local,dest=/tmp/.buildx-cache
+
+#     - name: Run functional tests with docker-compose
+#       run: |
+#         docker-compose -f docker-compose.yml -f tests/functional/docker-compose.yml up --exit-code-from functional-test-service

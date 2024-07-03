@@ -77,6 +77,8 @@ services:
       - elasticsearch
     networks:
       - appnetwork
+    entrypoint: >
+        sh -c "sleep 60"
     restart: unless-stopped
 
   redis:

@@ -65,6 +65,8 @@ services:
       - nginx
     networks:
       - appnetwork
+    ports:
+      - "9200:9200"
     restart: unless-stopped
 
   etl:  
@@ -77,8 +79,6 @@ services:
       - elasticsearch
     networks:
       - appnetwork
-    entrypoint: >
-        sh -c "sleep 60"
     restart: unless-stopped
 
   redis:
@@ -86,6 +86,8 @@ services:
     image: redis:7.2.5
     networks:
       - appnetwork
+    ports:
+      - "6379:6379"
     restart: unless-stopped
   
   backend1: &base-backend

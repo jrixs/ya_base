@@ -7,10 +7,13 @@ import pytest
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.helpers import async_bulk
 
-from tests.functional.settings import test_settings
+from settings import test_settings
+# from tests.functional.settings import test_settings
 
 #  Название теста должно начинаться со слова `test_`
-#  Любой тест с асинхронными вызовами нужно оборачивать декоратором `pytest.mark.asyncio`, который следит за запуском и работой цикла событий. 
+#  Любой тест с асинхронными вызовами нужно оборачивать декоратором
+# `pytest.mark.asyncio`, который следит за запуском и работой цикла событий.
+
 
 @pytest.mark.asyncio
 async def test_search():
@@ -46,9 +49,9 @@ async def test_search():
 
     # 2. Загружаем данные в ES
     es_client = AsyncElasticsearch(hosts=test_settings.es_host, verify_certs=False)
-    if await es_client.indices.exists(index=test_settings.es_index):
-        await es_client.indices.delete(index=test_settings.es_index)
-    await es_client.indices.create(index=test_settings.es_index, **test_settings.es_index_mapping)
+    if await es_client.indices.exists(index=test_settings.es_index_movies):
+        await es_client.indices.delete(index=test_settings.es_index_movies)
+    await es_client.indices.create(index=test_settings.es_index_movies, **test_settings.es_index_mapping_movies)
 
     updated, errors = await async_bulk(client=es_client, actions=bulk_query)
 
@@ -60,9 +63,9 @@ async def test_search():
     # 3. Запрашиваем данные из ES по API
 
     session = aiohttp.ClientSession()
-    url = test_settings.service_url + '/api/v1/search'
-    query_data = {'search': 'The Star'}
-    async with session.get(url, params=query_data) as response:
+    url = test_settings.service_url + '/api/v1/films'
+    query_data = {'films': 'The Star'}
+    async with session.get(url, params=query_data, ssl=False) as response:
         body = await response.json()
         headers = response.headers
         status = response.status

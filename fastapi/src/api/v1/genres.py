@@ -17,9 +17,7 @@ async def genre_details(
     genre_id: str,
     genre_service: GenreService = Depends(get_genre_service)
 ) -> Genre:
-    print(genre_id)
     genre = await genre_service.get_by_id(genre_id)
-    print(genre)
     if not genre:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
                             detail='genre not found')

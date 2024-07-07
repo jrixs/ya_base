@@ -4,6 +4,7 @@ from settings import test_settings
 from utils.redis_keys import Films
 from elasticsearch import BadRequestError
 from aiohttp import ClientSession
+from utils.query_builder import query_builder_movies
 
 
 @pytest.mark.parametrize(
@@ -70,7 +71,8 @@ async def test_films(
     try:
         # 3. Поиск в ES
         search_data = await es_search_data(
-            index=test_settings.es_index_movies, **query_data
+            index=test_settings.es_index_movies,
+            body=query_builder_movies(query_data)
         )
 
         # 4. Проверяем результат поиска в ES

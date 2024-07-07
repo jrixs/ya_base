@@ -1,19 +1,45 @@
 import uuid
 import time
 import json
-
-import aiohttp
 import pytest
-from elasticsearch import AsyncElasticsearch
-from elasticsearch.helpers import async_bulk
-
 from settings import test_settings
 from utils.redis_keys import Films
-import conftest
 
 
+@pytest.mark.parametrize(
+    'query_data, expected_answer',
+    [
+        (
+            {'search': 'The Star', 'page': '1', 'page_size': '50'},
+            {'status': 200, 'length': 50}
+        ),
+        (
+            {'search': 'The Star', 'page': '1', 'page_size': '25'},
+            {'status': 200, 'length': 25}
+        ),
+        (
+            {'search': 'Mashed potato', 'page': '1', 'page_size': '50'},
+            {'status': 200, 'length': 0}
+        ),
+        (
+            {'search': 'The Star', 'page': '5', 'page_size': '50'},
+            {'status': 200, 'length': 0}
+        ),
+        (
+            {'search': 'Howard', 'page': '1', 'page_size': '50'},
+            {'status': 200, 'length': 50}
+        )
+    ]
+)
 @pytest.mark.asyncio
-async def test_search():
+async def test_search(
+    es_write_data,
+    es_search_data,
+    redis_get_key,
+    api_get_query,
+    query_data,
+    expected_answer
+):
 
     # 1. Генерируем данные для ES
 
@@ -42,46 +68,40 @@ async def test_search():
     # Формирование данных
     bulk_query: list[dict] = []
     for row in es_data:
-        data = {'_index': test_settings.es_index_movies, '_id': row['id']}
+        data = {'_index': test_settings.es_index_movies,
+                '_id': row[test_settings.es_id_field_movies]}
         data.update({'_source': row})
         bulk_query.append(data)
 
     # 2. Загружаем данные в ES
-
-    es_client: AsyncElasticsearch = await conftest.es_client()
-    if await es_client.indices.exists(index=test_settings.es_index_movies):
-        await es_client.indices.delete(index=test_settings.es_index_movies)
-    await es_client.indices.create(index=test_settings.es_index_movies,
-                                   **test_settings.es_index_mapping_movies)
-
-    updated, errors = await async_bulk(client=es_client, actions=bulk_query)
-
-    await es_client.close()
-
-    if errors:
-        raise Exception('Ошибка записи данных в Elasticsearch')
+    await es_write_data(
+        _data=bulk_query,
+        _index=test_settings.es_index_movies,
+        _mapping=test_settings.es_index_mapping_movies
+    )
 
     # Время для обновления индекса ES
-    time.sleep(3)
+    time.sleep(2)
 
-    # 3. Запрашиваем данные из ES по API
+    # 3. Поиск в ES
+    search_data = await es_search_data(**query_data)
 
-    session = aiohttp.ClientSession()
-    url = test_settings.service_url + '/api/v1/films'
-    query_data = {'search': 'The Star', 'page': '1', 'page_size': '50'}
-    async with session.get(url, params=query_data, ssl=False) as response:
-        body = await response.json()
-        headers = response.headers
-        status = response.status
-    await session.close()
+    # 4. Проверяем результат поиска в ES
+    assert len(search_data) == expected_answer['length']
 
-    # 4. Проверяем ответ
-    assert status == 200
-    assert len(body.get('movies')) == 50
+    # 5. Запрашиваем данные из ES по API
+    body, headers, status = await api_get_query(
+        url=f"{test_settings.service_url}/api/v1/films",
+        query_data=query_data
+    )
 
-    # 5. Запрашиваем данные из redis по выполненомы ранее запросу
+    # 6. Проверяем ответ
+    assert status == expected_answer['status']
+    assert len(body.get('movies')) == expected_answer['length']
+
+    # 7. Запрашиваем данные из redis по выполненомы ранее запросу
     films = Films(**query_data)
-    value = await conftest.redis_get_key(str(films))
+    value = await redis_get_key(str(films))
 
-    # 6. Сравнения результата из ES и Кеша
+    # 8. Сравнения результата из ES и Кеша
     assert body == json.loads(value)

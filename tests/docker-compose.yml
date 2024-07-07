@@ -1,0 +1,74 @@
+
+services:
+
+  tests:
+    image: python:3.12-slim
+    environment:
+      - ES_HOST=http://test_elasticsearch:9200
+      - REDIS_HOST=test_redis
+      - REDIS_PORT=6379
+      - SERVICE_URL=http://test_backend
+      - ELASTIC_INDEX_MOVIES=movies
+      - ELASTIC_ID_FIELD_MOVIES=id
+      - ELASTIC_MAPPINGS="/testdata/mappings_movies.json"
+      - ELASTIC_INDEX_GENRES=genres
+      - ELASTIC_ID_FIELD_GENRES=id
+      - ELASTIC_MAPPING_GENRES="/testdata/mappings_genres.json"
+      - ELASTIC_INDEX_PERSONS=persons
+      - ELASTIC_ID_FIELD_PERSONS=id
+      - ELASTIC_MAPPING_PERSONS="/testdata/mappings_persons.json"
+    volumes:
+      - ./functional:/tests
+    entrypoint: >
+        sh -c "python -m pip install --no-cache-dir --upgrade pip
+        && cd /tests
+        && python -m pip install -r requirements.txt
+        && python utils/wait_for_es.py
+        && python utils/wait_for_redis.py
+        && pytest src/"
+    networks:
+      - tests
+
+  test_elasticsearch:
+      container_name: test_elasticsearch
+      image: elasticsearch:8.6.2
+      command: ["elasticsearch", "-Ecluster.name=my_cluster", "-Enode.name=my_node"]
+      environment:
+        - xpack.security.enabled=false
+        - discovery.type=single-node
+        - "ES_JAVA_OPTS=-Xms1024m -Xmx1024m"
+      networks:
+        - tests
+      ports:
+        - "127.0.0.1:9200:9200"
+
+  test_redis:
+      container_name: test_redis_movies
+      image: redis:7.2.5
+      networks:
+        - tests
+      ports:
+        - "127.0.0.1:6379:6379"
+
+  test_backend:
+      container_name: test_backend
+      environment:
+        - ELASTIC_HOST=test_elasticsearch
+        - REDIS_HOST=test_redis
+      build:
+        context: ../fastapi
+        dockerfile: Dockerfile
+      depends_on:
+        - test_redis
+        - test_elasticsearch
+      networks:
+        - tests
+      expose:
+        - 80/tcp
+      ports:
+        - "127.0.0.1:80:80"
+      command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 --log-config /src/core/logger --log-level info main:app
+
+networks:
+  tests:
+    driver: bridge

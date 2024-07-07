@@ -5,22 +5,22 @@ from core.logger import LOGGING
 
 class Settings(BaseSettings):
     # Применяем настройки логирования
-    logging_config: dict = Field(LOGGING, alias='LOGGING')
+    logging_config: dict = Field(LOGGING, env='LOGGING')
 
     # Название проекта. Используется в Swagger-документации
-    project_name: str = Field('backend_movies', alias='PROJECT_NAME')
+    project_name: str = Field('backend_movies', env='PROJECT_NAME')
 
     # Настройки Redis
-    redis_host: str = Field('redis', alias='REDIS_HOST')
-    redis_port: int = Field(6379, alias='REDIS_PORT')
+    redis_host: str = Field('redis', env='REDIS_HOST')
+    redis_port: int = Field(6379, env='REDIS_PORT')
 
     # Настройки Elasticsearch
-    elastic_schema: str = Field('http://', alias='ELASTIC_SCHEMA')
-    elastic_host: str = Field('elasticsearch', alias='ELASTIC_HOST')
-    elastic_port: int = Field(9200, alias='ELASTIC_PORT')
+    elastic_schema: str = Field('http://', env='ELASTIC_SCHEMA')
+    elastic_host: str = Field('elasticsearch', env='ELASTIC_HOST')
+    elastic_port: int = Field(9200, env='ELASTIC_PORT')
 
     # Корень проекта
-    base_dir: str = Field("/src", alias='BASE_DIR')
+    base_dir: str = Field("/src", env='BASE_DIR')
 
     class Config:
         env_file = '.env'

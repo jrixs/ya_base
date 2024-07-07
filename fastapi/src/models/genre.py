@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -11,7 +11,7 @@ class GenresItems(BaseModel):
 class GenreItems(BaseModel):
     id: str
     title: str
-    imdb_rating: float
+    imdb_rating: Optional[float]
 
 
 # Список всех жанров

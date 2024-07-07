@@ -52,13 +52,13 @@ class GenreService(Base):
 class GenresService(Base):
 
     async def get_genres(self, filtr: str = '') -> Optional[Genres]:
-        ganres = await self._genres_from_cache(filtr)
-        if not ganres:
-            ganres = await self._get_genres_from_elastic(filtr)
-            if not ganres:
+        genres = await self._genres_from_cache(filtr)
+        if not genres:
+            genres = await self._get_genres_from_elastic(filtr)
+            if not genres:
                 return None
-            await self._put_genres_to_cache(filtr, ganres)
-        return ganres
+            await self._put_genres_to_cache(filtr, genres)
+        return genres
 
     async def _get_genres_from_elastic(self, filtr: str) -> Optional[Genres]:
         if filtr:
@@ -78,7 +78,7 @@ class GenresService(Base):
                 {"genre.keyword": {"order": order}} if order else {}
             ]
         }
-
+        print(body)
         data = {'genres': []}
 
         try:
@@ -94,15 +94,15 @@ class GenresService(Base):
         return Genres(**data)
 
     async def _genres_from_cache(self, filtr: str) -> Optional[Genres]:
-        data = await self.redis.get(f'{filtr}_ganres')
+        data = await self.redis.get(f'{filtr}_genres')
         if not data:
             return None
-        ganre = Genres.parse_raw(data)
-        return ganre
+        genre = Genres.parse_raw(data)
+        return genre
 
-    async def _put_genres_to_cache(self, filtr: str, ganres: Genres):
+    async def _put_genres_to_cache(self, filtr: str, genres: Genres):
         await self.redis.set(
-            f'{filtr}_ganres', ganres.json(), FILM_CACHE_EXPIRE_IN_SECONDS
+            f'{filtr}_genres', genres.json(), FILM_CACHE_EXPIRE_IN_SECONDS
             )
 
 

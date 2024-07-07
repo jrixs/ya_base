@@ -1,5 +1,4 @@
 import uuid
-import time
 import json
 import pytest
 from settings import test_settings
@@ -16,6 +15,10 @@ from utils.redis_keys import Films
         (
             {'search': 'The Star', 'page': '1', 'page_size': '25'},
             {'status': 200, 'length': 25}
+        ),
+        (
+            {'search': 'The Star', 'page': '3', 'page_size': '10'},
+            {'status': 200, 'length': 10}
         ),
         (
             {'search': 'Mashed potato', 'page': '1', 'page_size': '50'},
@@ -80,11 +83,10 @@ async def test_search(
         _mapping=test_settings.es_index_mapping_movies
     )
 
-    # Время для обновления индекса ES
-    time.sleep(2)
-
     # 3. Поиск в ES
-    search_data = await es_search_data(**query_data)
+    search_data = await es_search_data(
+        index=test_settings.es_index_movies,
+        **query_data)
 
     # 4. Проверяем результат поиска в ES
     assert len(search_data) == expected_answer['length']

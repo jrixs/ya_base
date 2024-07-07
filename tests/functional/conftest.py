@@ -25,7 +25,8 @@ async def es_write_data(es_client: AsyncElasticsearch):
 
         updated, errors = await async_bulk(
             client=es_client,
-            actions=kwargs['_data'])
+            actions=kwargs['_data'],
+            refresh='wait_for')
 
         await es_client.close()
 
@@ -56,7 +57,7 @@ async def es_search_data(es_client: AsyncElasticsearch):
             body["sort"] = [{sort_by: {"order": order}}]
 
         try:
-            doc = await es_client.search(index="movies", body=body)
+            doc = await es_client.search(index=kwargs['index'], body=body)
             return [hit["_source"] for hit in doc["hits"]["hits"]]
         except NotFoundError:
             return []

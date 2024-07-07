@@ -39,27 +39,22 @@ async def es_write_data(es_client: AsyncElasticsearch):
 @pytest_asyncio.fixture(name='es_search_data')
 async def es_search_data(es_client: AsyncElasticsearch):
     async def inner(**kwargs):
-        {'search': 'The Star', 'page': '1', 'page_size': '25'},
-        body = {
-            "_source": ["id", "imdb_rating", "genres", "title"],
-            "query": {"bool": {"must": [], "filter": []}},
-            "size": int(kwargs['page_size']),
-            "from": (int(kwargs['page']) - 1) * int(kwargs['page_size']),
-        }
-
-        if kwargs.get('search'):
-            search_query = {"multi_match": {
-                "query": kwargs.get('search'), "fields": ["*"]}}
-            body["query"]["bool"]["must"].append(search_query)
-
-        if kwargs.get('order_by'):
-            order = "desc" if kwargs.get('order_by').startswith("-") else "asc"
-            sort_by = kwargs.get('order_by').lstrip("-")
-            body["sort"] = [{sort_by: {"order": order}}]
-
         try:
-            doc = await es_client.search(index=kwargs['index'], body=body)
+            doc = await es_client.search(
+                index=kwargs['index'],
+                body=kwargs['body'])
             return [hit["_source"] for hit in doc["hits"]["hits"]]
+        except NotFoundError:
+            return []
+
+    yield inner
+
+
+@pytest_asyncio.fixture(name='es_get_data')
+async def es_get_data(es_client: AsyncElasticsearch):
+    async def inner(**kwargs):
+        try:
+            return await es_client.get(index=kwargs['index'], id=kwargs['id'])
         except NotFoundError:
             return []
 
@@ -92,7 +87,8 @@ async def api_client():
 @pytest_asyncio.fixture(name='api_get_query')
 async def api_get_query(api_client: aiohttp.ClientSession):
     async def inner(**kwargs):
-        async with api_client.get(kwargs['url'], params=kwargs['query_data'],
+        async with api_client.get(kwargs['url'],
+                                  params=kwargs.get('query_data'),
                                   ssl=False) as response:
             body = await response.json()
             headers = response.headers

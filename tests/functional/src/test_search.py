@@ -2,6 +2,7 @@ import json
 import pytest
 from settings import test_settings
 from utils.redis_keys import Films
+from utils.query_builder import query_builder_movies
 
 
 @pytest.mark.parametrize(
@@ -45,7 +46,7 @@ async def test_search(
 ):
     # 1. Получение данных для тестировани
     bulk_query = await get_data_test(
-        file="testdata/data_movis.json",
+        file="testdata/data_movies.json",
         index=test_settings.es_index_movies,
         id=test_settings.es_id_field_movies
     )
@@ -60,7 +61,7 @@ async def test_search(
     # 3. Поиск в ES
     search_data = await es_search_data(
         index=test_settings.es_index_movies,
-        **query_data)
+        body=query_builder_movies(query_data))
 
     # 4. Проверяем результат поиска в ES
     assert len(search_data) == expected_answer['length']

@@ -78,7 +78,6 @@ class GenresService(Base):
                 {"genre.keyword": {"order": order}} if order else {}
             ]
         }
-        print(body)
         data = {'genres': []}
 
         try:

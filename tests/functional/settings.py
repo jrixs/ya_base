@@ -1,27 +1,29 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings
+from utils.get_mappings import read_json_file
 
 
 class TestSettings(BaseSettings):
-    # es_host: str = Field('http://elasticsearch:9200', env='ELASTIC_HOST')
-    # service_url: str = Field('http://nginx', env='SERVICE_URL')
 
-    es_host: str = Field('http://127.0.0.1:9200', env='ELASTIC_HOST')
-    service_url: str = Field('http://127.0.0.1', env='SERVICE_URL')
+    es_host: str = 'http://127.0.0.1:9200'
+    service_url: str = 'http://127.0.0.1'
+    redis_host: str = '127.0.0.1'
+    redis_port: int = 6379
 
-    es_index_movies: str = Field('movies', env='ELASTIC_INDEX_MOVIES')
-    es_id_field_movies: str = Field('id', env='ELASTIC_ID_FIELD_MOVIES')
-    es_index_mapping_movies: dict = Field({}, env='ELASTIC_MAPPING_MOVIES')
+    es_index_movies: str = Field(default='movies')
+    es_id_field_movies: str = Field(default='id')
+    es_index_mapping_movies: dict = Field(
+        default=read_json_file("testdata/mappings_movies.json"))
 
-    es_index_movies: str = Field('movies', env='ELASTIC_INDEX_MOVIES')
-    es_id_field_movies: str = Field('id', env='ELASTIC_ID_FIELD_MOVIES')
-    es_index_mapping_movies: dict = Field({}, env='ELASTIC_MAPPING_MOVIES')
+    es_index_genres: str = Field(default='genres')
+    es_id_field_genres: str = Field(default='id')
+    es_index_mapping_genres: dict = Field(
+        default=read_json_file("testdata/mappings_genres.json"))
 
-    es_index_movies: str = Field('movies', env='ELASTIC_INDEX_MOVIES')
-    es_id_field_movies: str = Field('id', env='ELASTIC_ID_FIELD_MOVIES')
-    es_index_mapping_movies: dict = Field({}, env='ELASTIC_MAPPING_MOVIES')
-
-    redis_host: str = Field('redis', env='REDIS_HOST')
+    es_index_persons: str = Field(default='persons')
+    es_id_field_persons: str = Field(default='id')
+    es_index_mapping_persons: dict = Field(
+        default=read_json_file("testdata/mappings_persons.json"))
 
 
 test_settings = TestSettings()

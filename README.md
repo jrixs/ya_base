@@ -69,3 +69,18 @@
     ```bash
     sudo docker-compose up -d --build
     ```
+
+## Разработка тестов
+- для разработки запустите контейнеры 
+```bash
+geral_async_API_sprint_1/tests$ sudo docker compose up -d --build
+```
+- запуск тестов
+```bash
+geral_async_API_sprint_1/tests/functional$ pytest src/
+```
+
+## Запуск тестов
+```bash
+sudo docker compose up --abort-on-container-exit
+```

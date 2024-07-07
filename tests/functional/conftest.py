@@ -5,6 +5,7 @@ import redis.asyncio as aioredis
 import pytest_asyncio
 import aiohttp
 from elasticsearch.helpers import async_bulk
+from utils.get_mappings import read_json_file
 
 
 @pytest_asyncio.fixture(name='es_client')
@@ -97,4 +98,22 @@ async def api_get_query(api_client: aiohttp.ClientSession):
             headers = response.headers
             status = response.status
         return body, headers, status
+    yield inner
+
+
+@pytest_asyncio.fixture(name='get_data_test')
+async def get_data_test():
+    async def inner(**kwargs):
+        es_data = read_json_file(kwargs['file'])
+        es_data = [hit['_source'] for hit in es_data['hits']['hits']]
+
+        bulk_query: list[dict] = []
+        for row in es_data:
+            data = {'_index': kwargs['index'],
+                    '_id': row[kwargs['id']]}
+            data.update({'_source': row})
+            bulk_query.append(data)
+
+        return bulk_query
+
     yield inner

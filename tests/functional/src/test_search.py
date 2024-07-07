@@ -1,4 +1,3 @@
-import uuid
 import json
 import pytest
 from settings import test_settings
@@ -10,7 +9,7 @@ from utils.redis_keys import Films
     [
         (
             {'search': 'The Star', 'page': '1', 'page_size': '50'},
-            {'status': 200, 'length': 50}
+            {'status': 200, 'length': 30}
         ),
         (
             {'search': 'The Star', 'page': '1', 'page_size': '25'},
@@ -30,12 +29,13 @@ from utils.redis_keys import Films
         ),
         (
             {'search': 'Howard', 'page': '1', 'page_size': '50'},
-            {'status': 200, 'length': 50}
+            {'status': 200, 'length': 30}
         )
     ]
 )
 @pytest.mark.asyncio
 async def test_search(
+    get_data_test,
     es_write_data,
     es_search_data,
     redis_get_key,
@@ -43,38 +43,12 @@ async def test_search(
     query_data,
     expected_answer
 ):
-
-    # 1. Генерируем данные для ES
-
-    es_data = [{
-        'id': str(uuid.uuid4()),
-        'imdb_rating': 8.5,
-        'genres': ['Action', 'Sci-Fi'],
-        'title': 'The Star',
-        'description': 'New World',
-        'directors_names': ['Stan'],
-        'actors_names': ['Ann', 'Bob'],
-        'writers_names': ['Ben', 'Howard'],
-        "directors": [
-            {"id": "efnnb8ff-3c82-4d31-ad8e-72b69f4e3f95", "name": "Stan"}
-        ],
-        'actors': [
-            {'id': 'ef86b8ff-3c82-4d31-ad8e-72b69f4e3f95', 'name': 'Ann'},
-            {'id': 'fb111f22-121e-44a7-b78f-b19191810fbf', 'name': 'Bob'}
-        ],
-        'writers': [
-            {'id': 'caf76c67-c0fe-477e-8766-3ab3ff2574b5', 'name': 'Ben'},
-            {'id': 'b45bd7bc-2e16-46d5-b125-983d356768c6', 'name': 'Howard'}
-        ]
-    } for _ in range(60)]
-
-    # Формирование данных
-    bulk_query: list[dict] = []
-    for row in es_data:
-        data = {'_index': test_settings.es_index_movies,
-                '_id': row[test_settings.es_id_field_movies]}
-        data.update({'_source': row})
-        bulk_query.append(data)
+    # 1. Получение данных для тестировани
+    bulk_query = await get_data_test(
+        file="testdata/data_movis.json",
+        index=test_settings.es_index_movies,
+        id=test_settings.es_id_field_movies
+    )
 
     # 2. Загружаем данные в ES
     await es_write_data(
@@ -105,5 +79,5 @@ async def test_search(
     films = Films(**query_data)
     value = await redis_get_key(str(films))
 
-    # 8. Сравнения результата из ES и Кеша
+    # 8. Сравнения результата из ES и Кэша
     assert body == json.loads(value)

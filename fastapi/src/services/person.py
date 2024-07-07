@@ -77,7 +77,7 @@ class PersonsService(Base):
                     "full_name": name}}] if name else [{"match_all": {}}]
                 }
             },
-            "sort": [{"full_name.keyword": {"order": order}} if order else {}],
+            "sort": [{"full_name": {"order": order}} if order else {}],
             "size": page_size,
             "from": (page - 1) * page_size,
         }

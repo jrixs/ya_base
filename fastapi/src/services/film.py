@@ -4,18 +4,12 @@ from typing import Optional
 from db.elastic import get_elastic
 from db.redis import get_redis
 from elasticsearch import AsyncElasticsearch, NotFoundError
-from models.film import AllFilms, Film
 from redis.asyncio import Redis
+from models.film import AllFilms, Film
+from services.base_services import Base, FILM_CACHE_EXPIRE_IN_SECONDS
+
 
 from fastapi import Depends
-
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
-
-
-class Base:
-    def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
-        self.redis = redis
-        self.elastic = elastic
 
 
 class FilmService(Base):

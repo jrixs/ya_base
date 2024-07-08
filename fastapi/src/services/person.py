@@ -7,14 +7,7 @@ from redis.asyncio import Redis
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.person import Person, Persons
-
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
-
-
-class Base:
-    def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
-        self.redis = redis
-        self.elastic = elastic
+from services.base_services import Base, FILM_CACHE_EXPIRE_IN_SECONDS
 
 
 class PersonService(Base):
@@ -120,3 +113,5 @@ def get_persons_service(
         elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> PersonsService:
     return PersonsService(redis, elastic)
+
+

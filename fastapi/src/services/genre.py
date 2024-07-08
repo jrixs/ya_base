@@ -75,7 +75,7 @@ class GenresService(Base):
                 }
             },
             "sort": [
-                {"genre.keyword": {"order": order}} if order else {}
+                {"genre": {"order": order}} if order else {}
             ]
         }
         data = {'genres': []}

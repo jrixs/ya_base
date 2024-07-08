@@ -1,21 +1,21 @@
-
 def query_builder_movies(data: dict) -> dict:
 
     body = {
         "_source": ["id", "imdb_rating", "genres", "title"],
         "query": {"bool": {"must": [], "filter": []}},
-        "size": int(data['page_size']),
-        "from": (int(data['page']) - 1) * int(data['page_size']),
+        "size": int(data["page_size"]),
+        "from": (int(data["page"]) - 1) * int(data["page_size"]),
     }
 
-    if data.get('search'):
-        search_query = {"multi_match": {
-            "query": data.get('search'), "fields": ["*"]}}
+    if data.get("search"):
+        search_query = {
+            "multi_match": {"query": data.get("search"), "fields": ["*"]}
+        }
         body["query"]["bool"]["must"].append(search_query)
 
-    if data.get('order_by'):
-        order = "desc" if data.get('order_by').startswith("-") else "asc"
-        sort_by = data.get('order_by').lstrip("-")
+    if data.get("order_by"):
+        order = "desc" if data.get("order_by").startswith("-") else "asc"
+        sort_by = data.get("order_by").lstrip("-")
         body["sort"] = [{sort_by: {"order": order}}]
 
     return body
@@ -23,21 +23,49 @@ def query_builder_movies(data: dict) -> dict:
 
 def query_builder_persons(data: dict) -> dict:
 
-    if data['name']:
-        order = "desc" if data['name'].startswith('-') else "asc"
+    if data["name"]:
+        order = "desc" if data["name"].startswith("-") else "asc"
     else:
         order = None
 
     body = {
-            "_source": ["id", "full_name"],
-            "query": {"bool": {
-                "must": [{"match": {
-                    "full_name": data['name']}}] if data['name'] else [{"match_all": {}}]
-                }
-            },
-            "sort": [{"full_name": {"order": order}} if order else {}],
-            "size": int(data['page_size']),
-            "from": (int(data['page']) - 1) * int(data['page_size']),
-        }
+        "_source": ["id", "full_name"],
+        "query": {
+            "bool": {
+                "must": (
+                    [{"match": {"full_name": data["name"]}}]
+                    if data["name"]
+                    else [{"match_all": {}}]
+                )
+            }
+        },
+        "sort": [{"full_name": {"order": order}} if order else {}],
+        "size": int(data["page_size"]),
+        "from": (int(data["page"]) - 1) * int(data["page_size"]),
+    }
+
+    return body
+
+
+def query_builder_genres(data: dict) -> dict:
+
+    if data["filtr"]:
+        order = "desc" if data["filtr"].startswith("-") else "asc"
+    else:
+        order = None
+
+    body = {
+        "_source": ["id", "genre"],
+        "size": 100,
+        "query": {
+            "bool": {
+                "must": (
+                    [{"match": {"genre": data["filtr"]}}]
+                    if data["filtr"]
+                    else [{"match_all": {}}]
+                )
+            }
+        },
+    }
 
     return body

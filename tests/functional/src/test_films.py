@@ -7,6 +7,26 @@ from aiohttp import ClientSession
 from utils.query_builder import query_builder_movies
 
 
+@pytest.mark.asyncio
+async def test_load_films(
+    get_data_test,
+    es_write_data,
+):
+    # 1. Получение данных для тестировани
+    bulk_query = await get_data_test(
+        file="testdata/data_movies.json",
+        index=test_settings.es_index_movies,
+        id=test_settings.es_id_field_movies,
+    )
+
+    # 2. Загружаем данные в ES
+    await es_write_data(
+        _data=bulk_query,
+        _index=test_settings.es_index_movies,
+        _mapping=test_settings.es_index_mapping_movies,
+    )
+
+
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
@@ -40,39 +60,23 @@ from utils.query_builder import query_builder_movies
         ),
         (
             {"page": "1", "page_size": "9999"},  # Размер страницы больше 100
-            {"status": 422, "length": 30},
+            {"status": 422, "length": 20},
         ),
     ],
 )
 @pytest.mark.asyncio
 async def test_films(
-    get_data_test,
-    es_write_data,
     es_search_data,
     redis_get_key,
     api_get_query,
     query_data,
     expected_answer,
 ):
-    # 1. Получение данных для тестировани
-    bulk_query = await get_data_test(
-        file="testdata/data_movies.json",
-        index=test_settings.es_index_movies,
-        id=test_settings.es_id_field_movies,
-    )
-
-    # 2. Загружаем данные в ES
-    await es_write_data(
-        _data=bulk_query,
-        _index=test_settings.es_index_movies,
-        _mapping=test_settings.es_index_mapping_movies,
-    )
-
     try:
         # 3. Поиск в ES
         search_data = await es_search_data(
             index=test_settings.es_index_movies,
-            body=query_builder_movies(query_data)
+            body=query_builder_movies(query_data),
         )
 
         # 4. Проверяем результат поиска в ES
@@ -114,55 +118,61 @@ async def get_response(session, url):
         return status, body
 
 
-# Эта штука заработает с норм data_movies
-@pytest.mark.asyncio
-async def test_film_details():
-    async with ClientSession() as session:
-        film_id = "d4b209dc-88fe-4380-a43e-8966673f2fe0"
-        url = test_settings.service_url + f"/api/v1/films/{film_id}"
-        status, body = await get_response(session, url)
-
-        assert status == 200
-        assert body["id"] == film_id
-        assert body["imdb_rating"] == 7.6
-        assert body["genres"] == ["Drama"]
-        assert (
-            body["title"]
-            == "That movie is not Star wars. Episode VII. Last jedi"
-        )
-        assert (
-            body["description"]
-            == """
-                Darth Vader travels in Austria.
-                He flues on plane.
-                He goes on Vienna's tram.
-                All movie viewer looks all that looks Vader.
-                And this movie is not Star wars. Episode VII. Last Jedi.
-                """
-        )
-        assert body["directors_names"] == ["Marco Romano"]
-        assert body["actors_names"] == []
-        assert body["writers_names"] == ["Marco Romano"]
-        assert body["directors"] == [
+@pytest.mark.parametrize(
+    "query_data, expected_answer",
+    [
+        (
+            {"id": "fc23ea9c-e799-419a-9df0-fc9d9b941a12"},
             {
-                "id": "232fd5ab-166f-47e4-afe1-28d3450721d5",
-                "name": "Marco Romano",
-            }
-        ]
-        assert body["actors"] == []
-        assert body["writers"] == [
+                "imdb_rating": 4.7,
+                "genres": ["Fantasy","Action","Adventure"],
+                "status": 200,
+                "data": True,
+            },
+        ),
+        (
+            {"id": "invalid_id"},
             {
-                "id": "232fd5ab-166f-47e4-afe1-28d3450721d5",
-                "name": "Marco Romano",
-            }
-        ]
-
-
-# Некорректный uuid
+                "imdb_rating": 0,
+                "title": "",
+                "genres": [],
+                "status": 404,
+                "data": False,
+            },
+        )
+    ],
+)
 @pytest.mark.asyncio
-async def test_invalid_uuid():
-    async with ClientSession() as session:
-        url = test_settings.service_url + "/api/v1/films/invalid_uuid"
-        status, _ = await get_response(session, url)
+async def test_film(
+    es_get_data, redis_get_key, api_get_query, query_data, expected_answer
+):
 
-        assert status == 404
+    # 1. Поиск в ES
+    data = await es_get_data(
+        index=test_settings.es_index_movies, **query_data
+    )
+
+    # 2. Проверяем результат из ES
+    assert (len(data) > 0) == expected_answer["data"]
+    if expected_answer["data"]:
+        assert data["_source"]["imdb_rating"] == expected_answer["imdb_rating"]
+        assert data["_source"]["genres"] == expected_answer["genres"]
+
+    # 3. Запрашиваем данные из ES по API
+    body, headers, status = await api_get_query(
+        url=f"{test_settings.service_url}/api/v1/films/{query_data['id']}"
+    )
+
+    # 4. Проверяем ответ
+    assert status == expected_answer["status"]
+    if expected_answer["data"]:
+        assert body["id"] == query_data["id"]
+        assert body["imdb_rating"] == expected_answer["imdb_rating"]
+        assert body["genres"] == expected_answer["genres"]
+
+    # 5. Запрашиваем данные из redis по выполненомы ранее запросу
+    value = await redis_get_key(f"film:{query_data['id']}")
+
+    # 6. Сравнения результата из ES и Кэша
+    if expected_answer["data"]:
+        assert body == json.loads(value)

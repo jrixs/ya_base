@@ -4,19 +4,11 @@ from settings import test_settings
 import redis.asyncio as aioredis
 import pytest_asyncio
 import aiohttp
-import asyncio
 from elasticsearch.helpers import async_bulk
 from utils.get_mappings import read_json_file
 
 
-@pytest_asyncio.fixture(scope='session')
-def event_loop():
-    loop = asyncio.get_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest_asyncio.fixture(scope='session', name='es_client')
+@pytest_asyncio.fixture(name='es_client')
 async def es_client():
     es_client = AsyncElasticsearch(hosts=test_settings.es_host,
                                    verify_certs=False)
@@ -24,7 +16,7 @@ async def es_client():
     await es_client.close()
 
 
-@pytest_asyncio.fixture(scope='session', name='es_write_data')
+@pytest_asyncio.fixture(name='es_write_data')
 async def es_write_data(es_client: AsyncElasticsearch):
     async def inner(**kwargs):
         if await es_client.indices.exists(index=kwargs['_index']):
@@ -37,14 +29,12 @@ async def es_write_data(es_client: AsyncElasticsearch):
             actions=kwargs['_data'],
             refresh='wait_for')
 
-        await es_client.close()
-
         if errors:
             raise Exception('Ошибка записи данных в Elasticsearch')
-    return inner
+    yield inner
 
 
-@pytest_asyncio.fixture(scope='session', name='es_search_data')
+@pytest_asyncio.fixture(name='es_search_data')
 async def es_search_data(es_client: AsyncElasticsearch):
     async def inner(**kwargs):
         try:
@@ -58,7 +48,7 @@ async def es_search_data(es_client: AsyncElasticsearch):
     yield inner
 
 
-@pytest_asyncio.fixture(scope='session', name='es_get_data')
+@pytest_asyncio.fixture(name='es_get_data')
 async def es_get_data(es_client: AsyncElasticsearch):
     async def inner(**kwargs):
         try:
@@ -69,7 +59,7 @@ async def es_get_data(es_client: AsyncElasticsearch):
     yield inner
 
 
-@pytest_asyncio.fixture(scope='session', name='redis_client')
+@pytest_asyncio.fixture(name='redis_client')
 async def redis_client():
     redis_client = aioredis.Redis(host=test_settings.redis_host,
                                   port=test_settings.redis_port,
@@ -78,21 +68,21 @@ async def redis_client():
     await redis_client.aclose()
 
 
-@pytest_asyncio.fixture(scope='session', name='redis_get_key')
+@pytest_asyncio.fixture(name='redis_get_key')
 async def redis_get_key(redis_client: aioredis.Redis):
     async def inner(key_name):
         return await redis_client.get(key_name)
     yield inner
 
 
-@pytest_asyncio.fixture(scope='session', name='api_client')
+@pytest_asyncio.fixture(name='api_client')
 async def api_client():
-    session = aiohttp.ClientSession()
-    yield session
-    await session.close()
+    api = aiohttp.ClientSession()
+    yield api
+    await api.close()
 
 
-@pytest_asyncio.fixture(scope='session', name='api_get_query')
+@pytest_asyncio.fixture(name='api_get_query')
 async def api_get_query(api_client: aiohttp.ClientSession):
     async def inner(**kwargs):
         async with api_client.get(kwargs['url'],
@@ -105,7 +95,7 @@ async def api_get_query(api_client: aiohttp.ClientSession):
     yield inner
 
 
-@pytest_asyncio.fixture(scope='session', name='get_data_test')
+@pytest_asyncio.fixture(name='get_data_test')
 async def get_data_test():
     async def inner(**kwargs):
         es_data = read_json_file(kwargs['file'])

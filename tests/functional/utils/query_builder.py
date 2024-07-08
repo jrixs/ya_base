@@ -69,3 +69,12 @@ def query_builder_genres(data: dict) -> dict:
     }
 
     return body
+
+
+NA = {
+    "query": {
+        "query_string": {
+            "query": "N//A"
+            }
+        }
+    }

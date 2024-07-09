@@ -1,8 +1,14 @@
 from http import HTTPStatus
 from typing import Optional
 
-from services.film import (AllFilms, Film, FilmService, FilmsService,
-                           get_film_service, get_films_service)
+from services.film import (
+    AllFilms,
+    Film,
+    FilmService,
+    FilmsService,
+    get_film_service,
+    get_films_service,
+)
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -10,7 +16,9 @@ router = APIRouter()
 
 
 # Внедряем FilmService с помощью Depends(get_film_service)
-@router.get("/{film_id}", response_model=Film)
+@router.get(
+    "/{film_id}", response_model=Film, description="Поиск конкретного фильма"
+)
 async def film_details(
     film_id: str, film_service: FilmService = Depends(get_film_service)
 ) -> Film:
@@ -23,7 +31,7 @@ async def film_details(
     return film
 
 
-@router.get("/", response_model=AllFilms)
+@router.get("/", response_model=AllFilms, description="Поиск по фильмам")
 async def films(
     films_service: FilmsService = Depends(get_films_service),
     order_by: Optional[str] = Query(

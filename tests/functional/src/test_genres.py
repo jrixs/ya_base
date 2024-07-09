@@ -27,11 +27,11 @@ async def test_load_data(get_data_test, es_write_data):
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"filtr": "War"}, {"status": 200, "length": 1}),
-        ({"filtr": "Music"}, {"status": 200, "length": 1}),
-        ({"filtr": "Nikas"}, {"status": 200, "length": 0}),
-        ({"filtr": "aaa"}, {"status": 200, "length": 0}),
-        ({"filtr": ""}, {"status": 200, "length": 21}),
+        ({"genre_name": "War"}, {"status": 200, "length": 1}),
+        ({"genre_name": "Music"}, {"status": 200, "length": 1}),
+        ({"genre_name": "Nikas"}, {"status": 200, "length": 0}),
+        ({"genre_name": "aaa"}, {"status": 200, "length": 0}),
+        ({"genre_name": ""}, {"status": 200, "length": 21}),
     ],
 )
 @pytest.mark.asyncio
@@ -59,7 +59,6 @@ async def test_genres(
 
     # 5. Запрашиваем данные из redis по выполненному ранее запросу
     genres = Genres(**query_data)
-
     value = await redis_get_key(str(genres))
 
     if len(search_data) > 0:

@@ -24,7 +24,7 @@ class Persons(Pagination):
 
 
 class Genres(Pagination):
-    filtr: str = Field(default="None")
+    genre_name: str = Field(default="None")
 
     def __str__(self):
-        return f"{self.filtr}_genres"
+        return f"{self.genre_name}_genres"

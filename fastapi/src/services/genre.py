@@ -44,18 +44,18 @@ class GenreService(Base):
 
 class GenresService(Base):
 
-    async def get_genres(self, filtr: str = '') -> Optional[Genres]:
-        genres = await self._genres_from_cache(filtr)
+    async def get_genres(self, genre_name: str = '') -> Optional[Genres]:
+        genres = await self._genres_from_cache(genre_name)
         if not genres:
-            genres = await self._get_genres_from_elastic(filtr)
+            genres = await self._get_genres_from_elastic(genre_name)
             if not genres:
                 return None
-            await self._put_genres_to_cache(filtr, genres)
+            await self._put_genres_to_cache(genre_name, genres)
         return genres
 
-    async def _get_genres_from_elastic(self, filtr: str) -> Optional[Genres]:
-        if filtr:
-            order = "desc" if filtr.startswith('-') else "asc"
+    async def _get_genres_from_elastic(self, genre_name: str) -> Optional[Genres]:
+        if genre_name:
+            order = "desc" if genre_name.startswith('-') else "asc"
         else:
             order = None
 
@@ -64,7 +64,7 @@ class GenresService(Base):
             "size": 100,
             "query": {
                 "bool": {
-                    "must": [{"match": {"genre": filtr}}] if filtr else [{"match_all": {}}]
+                    "must": [{"match": {"genre": genre_name}}] if genre_name else [{"match_all": {}}]
                 }
             },
             "sort": [
@@ -85,16 +85,16 @@ class GenresService(Base):
             return None
         return Genres(**data)
 
-    async def _genres_from_cache(self, filtr: str) -> Optional[Genres]:
-        data = await self.redis.get(f'{filtr}_genres')
+    async def _genres_from_cache(self, genre_name: str) -> Optional[Genres]:
+        data = await self.redis.get(f'{genre_name}_genres')
         if not data:
             return None
         genre = Genres.parse_raw(data)
         return genre
 
-    async def _put_genres_to_cache(self, filtr: str, genres: Genres):
+    async def _put_genres_to_cache(self, genre_name: str, genres: Genres):
         await self.redis.set(
-            f'{filtr}_genres', genres.json(), FILM_CACHE_EXPIRE_IN_SECONDS
+            f'{genre_name}_genres', genres.json(), FILM_CACHE_EXPIRE_IN_SECONDS
             )
 
 

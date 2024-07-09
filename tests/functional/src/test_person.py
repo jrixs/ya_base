@@ -1,8 +1,10 @@
 import json
+
 import pytest
+
 from settings import test_settings
-from utils.redis_keys import Persons
 from utils.query_builder import query_builder_persons
+from utils.redis_keys import Persons
 
 
 @pytest.mark.asyncio

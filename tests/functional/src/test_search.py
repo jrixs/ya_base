@@ -1,8 +1,10 @@
 import json
+
 import pytest
+
 from settings import test_settings
+from utils.query_builder import NA, query_builder_movies
 from utils.redis_keys import Films
-from utils.query_builder import query_builder_movies, NA
 
 
 @pytest.mark.asyncio

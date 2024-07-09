@@ -49,19 +49,14 @@ def query_builder_persons(data: dict) -> dict:
 
 def query_builder_genres(data: dict) -> dict:
 
-    if data["filtr"]:
-        order = "desc" if data["filtr"].startswith("-") else "asc"
-    else:
-        order = None
-
     body = {
         "_source": ["id", "genre"],
         "size": 100,
         "query": {
             "bool": {
                 "must": (
-                    [{"match": {"genre": data["filtr"]}}]
-                    if data["filtr"]
+                    [{"match": {"genre": data["genre_name"]}}]
+                    if data["genre_name"]
                     else [{"match_all": {}}]
                 )
             }

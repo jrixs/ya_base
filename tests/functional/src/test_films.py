@@ -1,17 +1,16 @@
 import json
+
 import pytest
-from settings import test_settings
-from utils.redis_keys import Films
-from elasticsearch import BadRequestError
 from aiohttp import ClientSession
+from elasticsearch import BadRequestError
+
+from settings import test_settings
 from utils.query_builder import query_builder_movies
+from utils.redis_keys import Films
 
 
 @pytest.mark.asyncio
-async def test_load_films(
-    get_data_test,
-    es_write_data,
-):
+async def test_load_data(get_data_test, es_write_data):
     # 1. Получение данных для тестировани
     bulk_query = await get_data_test(
         file="testdata/data_movies.json",

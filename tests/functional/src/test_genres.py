@@ -1,8 +1,10 @@
 import json
+
 import pytest
+
 from settings import test_settings
-from utils.redis_keys import Genres
 from utils.query_builder import query_builder_genres
+from utils.redis_keys import Genres
 
 
 @pytest.mark.asyncio

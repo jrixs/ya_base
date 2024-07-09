@@ -1,5 +1,6 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings
+
 from utils.get_mappings import read_json_file
 
 

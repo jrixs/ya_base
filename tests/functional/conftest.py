@@ -1,19 +1,48 @@
 
-from elasticsearch import AsyncElasticsearch, NotFoundError
-from settings import test_settings
-import redis.asyncio as aioredis
-import pytest_asyncio
+import asyncio
+
 import aiohttp
+import backoff
+import pytest_asyncio
+import redis.asyncio as aioredis
+from elasticsearch import (AsyncElasticsearch, ConnectionError, NotFoundError,
+                           TransportError)
 from elasticsearch.helpers import async_bulk
+
+from settings import test_settings
 from utils.get_mappings import read_json_file
 
 
-@pytest_asyncio.fixture(name='es_client')
+@pytest_asyncio.fixture(scope='session')
+def event_loop():
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+async def backoff_handler(awaitable, *args, **kwargs):
+    @backoff.on_exception(backoff.expo,
+                          (ConnectionError, TransportError,
+                           aiohttp.ClientError, aioredis.RedisError),
+                          max_tries=8,
+                          max_time=60)
+    async def wrapper():
+        return await awaitable(*args, **kwargs)
+    return await wrapper()
+
+
+@pytest_asyncio.fixture(scope='session')
 async def es_client():
-    es_client = AsyncElasticsearch(hosts=test_settings.es_host,
-                                   verify_certs=False)
-    yield es_client
-    await es_client.close()
+    client = AsyncElasticsearch(hosts=test_settings.es_host,
+                                verify_certs=False)
+    try:
+        await backoff_handler(client.ping)
+        yield client
+    finally:
+        await client.close()
 
 
 @pytest_asyncio.fixture(name='es_write_data')
@@ -24,7 +53,8 @@ async def es_write_data(es_client: AsyncElasticsearch):
         await es_client.indices.create(index=kwargs['_index'],
                                        **kwargs['_mapping'])
 
-        updated, errors = await async_bulk(
+        updated, errors = await backoff_handler(
+            async_bulk,
             client=es_client,
             actions=kwargs['_data'],
             refresh='wait_for')
@@ -38,7 +68,8 @@ async def es_write_data(es_client: AsyncElasticsearch):
 async def es_search_data(es_client: AsyncElasticsearch):
     async def inner(**kwargs):
         try:
-            doc = await es_client.search(
+            doc = await backoff_handler(
+                es_client.search,
                 index=kwargs['index'],
                 body=kwargs['body'])
             return [hit["_source"] for hit in doc["hits"]["hits"]]
@@ -52,18 +83,22 @@ async def es_search_data(es_client: AsyncElasticsearch):
 async def es_get_data(es_client: AsyncElasticsearch):
     async def inner(**kwargs):
         try:
-            return await es_client.get(index=kwargs['index'], id=kwargs['id'])
+            return await backoff_handler(
+                es_client.get,
+                index=kwargs['index'],
+                id=kwargs['id'])
         except NotFoundError:
             return []
 
     yield inner
 
 
-@pytest_asyncio.fixture(name='redis_client')
+@pytest_asyncio.fixture(scope='session', name='redis_client')
 async def redis_client():
     redis_client = aioredis.Redis(host=test_settings.redis_host,
                                   port=test_settings.redis_port,
                                   decode_responses=True)
+    await backoff_handler(redis_client.ping)
     yield redis_client
     await redis_client.aclose()
 
@@ -71,11 +106,11 @@ async def redis_client():
 @pytest_asyncio.fixture(name='redis_get_key')
 async def redis_get_key(redis_client: aioredis.Redis):
     async def inner(key_name):
-        return await redis_client.get(key_name)
+        return await backoff_handler(redis_client.get, key_name)
     yield inner
 
 
-@pytest_asyncio.fixture(name='api_client')
+@pytest_asyncio.fixture(scope='session', name='api_client')
 async def api_client():
     api = aiohttp.ClientSession()
     yield api
@@ -85,9 +120,10 @@ async def api_client():
 @pytest_asyncio.fixture(name='api_get_query')
 async def api_get_query(api_client: aiohttp.ClientSession):
     async def inner(**kwargs):
-        async with api_client.get(kwargs['url'],
-                                  params=kwargs.get('query_data'),
-                                  ssl=False) as response:
+        async with await backoff_handler(
+              api_client.get, kwargs['url'],
+              params=kwargs.get('query_data'),
+              ssl=False) as response:
             body = await response.json()
             headers = response.headers
             status = response.status

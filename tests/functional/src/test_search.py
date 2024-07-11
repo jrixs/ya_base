@@ -1,13 +1,12 @@
 import json
-
 import pytest
-
 from settings import test_settings
-from utils.query_builder import NA, query_builder_movies
 from utils.redis_keys import Films
+from utils.query_builder import query_builder_movies, NA
+from http import HTTPStatus
 
+pytestmark = pytest.mark.asyncio
 
-@pytest.mark.asyncio
 async def test_load_data(
     es_search_data,
     get_data_test,
@@ -42,53 +41,52 @@ async def test_load_data(
     [
         (
             {'search': 'The Star', 'page': '1', 'page_size': '100'},
-            {'status': 200, 'length': 20}
+            {'status': HTTPStatus.OK, 'length': 20}
         ),
         (
             {'search': 'The Star', 'page': '1', 'page_size': '10'},
-            {'status': 200, 'length': 10}
+            {'status': HTTPStatus.OK, 'length': 10}
         ),
         (
             {'search': 'The Star', 'page': '2', 'page_size': '10'},
-            {'status': 200, 'length': 10}
+            {'status': HTTPStatus.OK, 'length': 10}
         ),
         (
             {'search': 'Western', 'page': '1', 'page_size': '10'},
-            {'status': 200, 'length': 2}
+            {'status': HTTPStatus.OK, 'length': 2}
         ),
         (
             {'search': 'Tom', 'page': '1', 'page_size': '10'},
-            {'status': 200, 'length': 2}
+            {'status': HTTPStatus.OK, 'length': 2}
         ),
         (
             {'search': '-Tom', 'page': '1', 'page_size': '10'},
-            {'status': 200, 'length': 2}
+            {'status': HTTPStatus.OK, 'length': 2}
         ),
         (
             {'search': 'Yuri', 'page': '1', 'page_size': '10'},
-            {'status': 200, 'length': 0}
+            {'status': HTTPStatus.OK, 'length': 0}
         ),
         (
             {'search': 'Soulstar system of its energy resources',
              'page': '1', 'page_size': '10'},
-            {'status': 200, 'length': 3}
+            {'status': HTTPStatus.OK, 'length': 3}
         ),
         (
             {'search': '7.2',
              'page': '1', 'page_size': '10'},
-            {'status': 200, 'length': 2}
+            {'status': HTTPStatus.OK, 'length': 2}
         ),
         (
             {'search': '', 'page': '100', 'page_size': '100'},
-            {'status': 200, 'length': 0}
+            {'status': HTTPStatus.OK, 'length': 0}
         ),
         (
             {'search': '', 'page': '1', 'page_size': '100'},
-            {'status': 200, 'length': 20}
+            {'status': HTTPStatus.OK, 'length': 20}
         )
     ]
 )
-@pytest.mark.asyncio
 async def test_search(
     es_search_data,
     redis_get_key,

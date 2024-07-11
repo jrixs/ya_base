@@ -1,13 +1,12 @@
 import json
-
 import pytest
-
 from settings import test_settings
-from utils.query_builder import query_builder_genres
 from utils.redis_keys import Genres
+from utils.query_builder import query_builder_genres
+from http import HTTPStatus
 
+pytestmark = pytest.mark.asyncio
 
-@pytest.mark.asyncio
 async def test_load_data(get_data_test, es_write_data):
     # 1. Получение данных для тестировани
     bulk_query = await get_data_test(
@@ -27,14 +26,13 @@ async def test_load_data(get_data_test, es_write_data):
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"genre_name": "War"}, {"status": 200, "length": 1}),
-        ({"genre_name": "Music"}, {"status": 200, "length": 1}),
-        ({"genre_name": "Nikas"}, {"status": 200, "length": 0}),
-        ({"genre_name": "aaa"}, {"status": 200, "length": 0}),
-        ({"genre_name": ""}, {"status": 200, "length": 21}),
+        ({"genre_name": "War"}, {"status": HTTPStatus.OK, "length": 1}),
+        ({"genre_name": "Music"}, {"status": HTTPStatus.OK, "length": 1}),
+        ({"genre_name": "Nikas"}, {"status": HTTPStatus.OK, "length": 0}),
+        ({"genre_name": "aaa"}, {"status": HTTPStatus.OK, "length": 0}),
+        ({"genre_name": ""}, {"status": HTTPStatus.OK, "length": 21}),
     ],
 )
-@pytest.mark.asyncio
 async def test_genres(
     es_search_data, redis_get_key, api_get_query, query_data, expected_answer
 ):
@@ -71,27 +69,26 @@ async def test_genres(
     [
         (
             {"id": "c020dab2-e9bd-4758-95ca-dbe363462173"},
-            {"genre": "War", "films": 12, "status": 200, "data": True},
+            {"genre": "War", "films": 12, "status": HTTPStatus.OK, "data": True},
         ),
         (
             {"id": "eb7212a7-dd10-4552-bf7b-7a505a8c0b95"},
-            {"genre": "History", "films": 20, "status": 200, "data": True},
+            {"genre": "History", "films": 20, "status": HTTPStatus.OK, "data": True},
         ),
         (
             {"id": "eb7212a7-dd10-4552-bf7b-7a505a8c0b95sss"},
-            {"genre": "", "films": 0, "status": 404, "data": False},
+            {"genre": "", "films": 0, "status": HTTPStatus.NOT_FOUND, "data": False},
         ),
         (
             {"id": "id/eb7212a7-dd10-4552-bf7b-7a505a8c0b95"},
-            {"genre": "", "films": 0, "status": 404, "data": False},
+            {"genre": "", "films": 0, "status": HTTPStatus.NOT_FOUND, "data": False},
         ),
         (
             {"id": "a886d0ec-c3f3-4b16-b973-dedcf5bfa395"},
-            {"genre": "Short", "films": 172, "status": 200, "data": True},
+            {"genre": "Short", "films": 172, "status": HTTPStatus.OK, "data": True},
         ),
     ],
 )
-@pytest.mark.asyncio
 async def test_genre(
     es_get_data, redis_get_key, api_get_query, query_data, expected_answer
 ):

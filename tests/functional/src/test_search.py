@@ -7,6 +7,7 @@ from http import HTTPStatus
 
 pytestmark = pytest.mark.asyncio
 
+
 async def test_load_data(
     es_search_data,
     get_data_test,

@@ -25,7 +25,7 @@ async def person_details(
     person_id: str, person_service: PersonService = Depends(get_person_service)
 ) -> Person:
 
-    person = await person_service.get_by_id(person_id)
+    person = await person_service.get(person_id)
 
     if not person:
         raise HTTPException(
@@ -52,7 +52,7 @@ async def persons(
     ),
 ) -> Persons:
 
-    persons = await persons_service.get_persons(
+    persons = await persons_service.get(
         name=name, page=page, page_size=page_size
     )
     if not persons:

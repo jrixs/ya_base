@@ -7,6 +7,7 @@ from http import HTTPStatus
 
 pytestmark = pytest.mark.asyncio
 
+
 async def test_load_data(get_data_test, es_write_data):
     # 1. Получение данных для тестировани
     bulk_query = await get_data_test(

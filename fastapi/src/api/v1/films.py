@@ -22,7 +22,7 @@ router = APIRouter()
 async def film_details(
     film_id: str, film_service: FilmService = Depends(get_film_service)
 ) -> Film:
-    film = await film_service.get_by_id(film_id)
+    film = await film_service.get(film_id)
     if not film:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Film not found"
@@ -49,7 +49,7 @@ async def films(
         le=100,
     ),
 ) -> AllFilms:
-    films = await films_service.get_films(
+    films = await films_service.get(
         filtr=order_by, search=search, page=page, page_size=page_size
     )
     if not films:

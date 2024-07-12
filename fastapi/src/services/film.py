@@ -5,80 +5,74 @@ from db.elastic import get_elastic
 from db.redis import get_redis
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from redis.asyncio import Redis
+from services.base_services import Cache, Storage
 from models.film import AllFilms, Film
-from services.base_services import Base, FILM_CACHE_EXPIRE_IN_SECONDS
+from services.base_services import BaseService, RedisCache, ElasticStorage
 
 
 from fastapi import Depends
 
 
-class FilmService(Base):
+class FilmService(BaseService):
 
-    # get_by_id возвращает объект фильма. Он опционален, так как фильм может отсутствовать в базе
-    async def get_by_id(self, film_id: str) -> Optional[Film]:
-        # Пытаемся получить данные из кеша, потому что оно работает быстрее
-        film = await self._film_from_cache(film_id)
+    def __init__(self, storage: Storage, cache: Cache):
+        super().__init__(storage=storage, cache=cache)
+
+    async def get(self, film_id: str) -> Optional[Film]:
+        film = await self._get_from_cache(film_id)
         if not film:
-            # Если фильма нет в кеше, то ищем его в Elasticsearch
-            film = await self._get_film_from_elastic(film_id)
+            film = await self._get_from_storage(film_id)
             if not film:
-                # Если он отсутствует в Elasticsearch, значит, фильма вообще нет в базе
                 return None
-            # Сохраняем фильм в кеш
-            await self._put_film_to_cache(film)
-
+            await self._set_to_cache(film)
         return film
 
-    async def _get_film_from_elastic(self, film_id: str) -> Optional[Film]:
+    async def _get_from_storage(self, film_id: str) -> Optional[Film]:
+        doc = await self._storage.get(_index="movies", _id=film_id)
         try:
-            doc = await self.elastic.get(index="movies", id=film_id)
+            return Film(**doc["_source"])
         except NotFoundError:
             return None
-        return Film(**doc["_source"])
 
-    async def _film_from_cache(self, film_id: str) -> Optional[Film]:
+    async def _get_from_cache(self, film_id: str) -> Optional[Film]:
         # Пытаемся получить данные о фильме из кеша, используя команду get
-        # https://redis.io/commands/get/
-        data = await self.redis.get(f"film:{film_id}")
+        data = await self._cache.get(f"film:{film_id}")
         if not data:
             return None
-
         # pydantic предоставляет удобное API для создания объекта моделей из json
         film = Film.parse_raw(data)
         return film
 
-    async def _put_film_to_cache(self, film: Film):
+    async def _set_to_cache(self, film: Film):
         # Сохраняем данные о фильме, используя команду set
-        # Выставляем время жизни кеша — 5 минут
-        # https://redis.io/commands/set/
-        # pydantic позволяет сериализовать модель в json
-        await self.redis.set(
-            f"film:{film.id}", film.json(), FILM_CACHE_EXPIRE_IN_SECONDS
-        )
+        await self._cache.set(f"film:{film.id}", film.json())
 
 
-class FilmsService(Base):
+class FilmsService(BaseService):
 
-    async def get_films(
+    def __init__(self, storage: Storage, cache: Cache):
+        super().__init__(storage=storage, cache=cache)
+
+    async def get(
         self,
         filtr: str = "",
         search: str = "",
         page: int = 1,
         page_size: int = 10,
     ) -> Optional[AllFilms]:
-        films = await self._films_from_cache(filtr, search, page, page_size)
+        films = await self._get_from_cache(filtr, search, page, page_size)
         if not films:
-            films = await self._get_films_from_elastic(
+            films = await self._get_from_storage(
                 filtr, search, page, page_size
             )
             if not films:
                 return None
-            await self._put_films_to_cache(
+            await self._set_to_cache(
                 filtr, search, page, page_size, films
             )
         return films
 
-    async def _get_films_from_elastic(
+    async def _get_from_storage(
         self, filtr: str, search: str, page: int, page_size: int
     ) -> Optional[AllFilms]:
         body = {
@@ -98,27 +92,27 @@ class FilmsService(Base):
             body["sort"] = [{sort_by: {"order": order}}]
 
         data = {"movies": []}
-        try:
-            doc = await self.elastic.search(index="movies", body=body)
+        doc = await self._storage.search(_index="movies", _body=body)
+        if doc:
             data["movies"].extend(
                 [hit["_source"] for hit in doc["hits"]["hits"]]
             )
-        except NotFoundError:
+        else:
             return None
 
         return AllFilms(**data)
 
-    async def _films_from_cache(
+    async def _get_from_cache(
         self, filtr: str, search: str, page: int, page_size: int
     ) -> Optional[AllFilms]:
         cache_key = f"{filtr}_{search}_{page}_{page_size}_films"
-        data = await self.redis.get(cache_key)
+        data = await self._cache.get(cache_key)
         if not data:
             return None
         films = AllFilms.parse_raw(data)
         return films
 
-    async def _put_films_to_cache(
+    async def _set_to_cache(
         self,
         filtr: str,
         search: str,
@@ -127,9 +121,7 @@ class FilmsService(Base):
         films: AllFilms,
     ):
         cache_key = f"{filtr}_{search}_{page}_{page_size}_films"
-        await self.redis.set(
-            cache_key, films.json(), ex=FILM_CACHE_EXPIRE_IN_SECONDS
-        )
+        await self._cache.set(cache_key, films.json())
 
 
 @lru_cache(maxsize=20)
@@ -137,7 +129,8 @@ def get_film_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmService:
-    return FilmService(redis, elastic)
+    return FilmService(storage=ElasticStorage(elastic),
+                       cache=RedisCache(redis))
 
 
 @lru_cache(maxsize=20)
@@ -145,4 +138,5 @@ def get_films_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmsService:
-    return FilmsService(redis, elastic)
+    return FilmsService(storage=ElasticStorage(elastic),
+                        cache=RedisCache(redis))

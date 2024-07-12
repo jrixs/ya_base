@@ -8,6 +8,7 @@ from http import HTTPStatus
 
 pytestmark = pytest.mark.asyncio
 
+
 async def test_load_films(
     get_data_test,
     es_write_data,

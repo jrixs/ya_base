@@ -22,7 +22,7 @@ router = APIRouter()
 async def genre_details(
     genre_id: str, genre_service: GenreService = Depends(get_genre_service)
 ) -> Genre:
-    genre = await genre_service.get_by_id(genre_id)
+    genre = await genre_service.get(genre_id)
     if not genre:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="genre not found"
@@ -40,7 +40,7 @@ async def genres(
     ),
 ) -> Genres:
 
-    genres = await genres_service.get_genres(genre_name=genre_name)
+    genres = await genres_service.get(genre_name=genre_name)
     if not genres:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="genres not found"

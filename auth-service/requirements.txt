@@ -1,0 +1,6 @@
+SqlAlchemy
+Alembic
+redis-py
+Typer
+passlib
+werkzeug

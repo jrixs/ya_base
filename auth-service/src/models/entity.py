@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from db.postgres import Base
 
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -17,12 +18,12 @@ class User(Base):
     last_name = Column(String(50))
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    def __init__(self, login: str, password: str, first_name:str, last_name: str) -> None:
+    def __init__(self, login: str, password: str, first_name: str, last_name: str) -> None:
         self.login = login
         self.password = self.password = generate_password_hash(password)
         self.first_name = first_name
         self.last_name = last_name
-    
+
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password, password)
 

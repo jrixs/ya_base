@@ -1,6 +1,11 @@
 SqlAlchemy
 Alembic
-redis-py
 Typer
 passlib
 werkzeug
+fastapi
+redis
+gunicorn
+pydantic-settings
+asyncpg
+orjson

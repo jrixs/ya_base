@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
@@ -5,7 +7,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
 
     # Название проекта
-    project_name: str = Field("Сервис аторизации", env="PROJECT_NAME")
+    project_name: str = Field("Сервис авторизации", env="PROJECT_NAME")
 
     # Настройка БД
     db_host: str = Field("127.0.0.1", env="DB_HOST")
@@ -21,9 +23,26 @@ class Settings(BaseSettings):
     # Корень проекта
     base_dir: str = Field("/src", env="BASE_DIR")
 
+    postgres_indexes_naming_convention: dict = {
+        "ix": "%(column_0_label)s_idx",
+        "uq": "%(table_name)s_%(column_0_name)s_key",
+        "ck": "%(table_name)s_%(constraint_name)s_check",
+        "fk": "%(table_name)s_%(column_0_name)s_fkey",
+        "pk": "%(table_name)s_pkey",
+    }
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
 
+    @property
+    def database_url(self) -> str:
+        return f'postgresql+psycopg2://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}'
 
-settings = Settings()
+
+@lru_cache
+def get_config() -> Settings:
+    return Settings()
+
+
+settings = get_config()

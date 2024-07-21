@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 import logging
 
-from api import test
+from api import test, login, logout
 from core.config import settings
 from db import redis
 from db.postgres import engine
@@ -38,3 +38,5 @@ app = FastAPI(
 
 
 app.include_router(test.router, prefix="/auth/test", tags=["test"])
+app.include_router(login.router, prefix="/auth/login", tags=["login"])
+app.include_router(logout.router, prefix="/auth/logout", tags=["logout"])

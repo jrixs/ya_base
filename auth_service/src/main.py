@@ -7,8 +7,11 @@ from db import redis
 from db.postgres import engine
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
+from api.registration import router as registration_router
 
 from fastapi import FastAPI
+
+from models.auth_service import Role
 
 logger = logging.getLogger()
 
@@ -20,7 +23,7 @@ async def lifespan(app: FastAPI):
     yield
     await redis.redis.close()
     engine.dispose()
-
+    
 
 app = FastAPI(
     # Конфигурируем название проекта.
@@ -36,7 +39,8 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
-
 app.include_router(test.router, prefix="/auth/test", tags=["test"])
+app.include_router(registration_router, prefix="/auth", tags=["registration"])
 app.include_router(login.router, prefix="/auth/login", tags=["login"])
 app.include_router(logout.router, prefix="/auth/logout", tags=["logout"])
+

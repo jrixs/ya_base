@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # Корень проекта
     base_dir: str = Field("/src", env="BASE_DIR")
 
+    # Соль
+    salt: str = Field("$2b$12$IvGyiwB/y/SIdpGk2xp.BO", env="SALT")
+
     postgres_indexes_naming_convention: dict = {
         "ix": "%(column_0_label)s_idx",
         "uq": "%(table_name)s_%(column_0_name)s_key",

@@ -16,12 +16,3 @@ def get_session() -> SessionLocal:
         yield session
     finally:
         session.close()
-
-
-async def purge_database():
-    session = next(get_session())
-    session.execute("drop schema auth_service;")
-    session.execute("drop schema auth_data;")
-    session.execute("drop schema auth_secret;")
-    session.execute("drop table alembic_version;")
-    session.commit()

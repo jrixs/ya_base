@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     # Соль
     salt: str = Field("$2b$12$IvGyiwB/y/SIdpGk2xp.BO", env="SALT")
 
+    # Время жизни токенов
+    life_access_token: int = Field(60 * 60 * 3, env="LIFE_ACCESS_TOKEN")
+    life_refresh_token: int = Field(60 * 60 * 24 * 7, env="LIFE_REFRESH_TOKEN")
+
     postgres_indexes_naming_convention: dict = {
         "ix": "%(column_0_label)s_idx",
         "uq": "%(table_name)s_%(column_0_name)s_key",

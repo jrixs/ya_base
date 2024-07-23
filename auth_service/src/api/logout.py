@@ -1,25 +1,24 @@
-from fastapi import APIRouter, status, Body, HTTPException, Depends
-from services.logout import blocked_token
+from fastapi import APIRouter, status, HTTPException, Depends
+from services.logout import service_logout, BlockedToken
+
+from core.dependencies import VerifiedUser
 
 router = APIRouter()
 
 
-@router.post("/",
+@router.post("/logout",
              summary="logout",
              description="logout",
              )
 async def logout(
-    service_logout: bool = Depends(blocked_token),
-    login: str = Body(..., embed=True),
-    access_token: str = Body(..., embed=True),
-    refresh_token: str = Body(..., embed=True)
+    current_user: VerifiedUser,
+    service_logout: BlockedToken = Depends(service_logout)
 ):
-    blocked = await service_logout.blocked(
-        login=login,
-        access_token=access_token,
-        refresh_token=refresh_token
-        )
-    if blocked:
+    """
+    после получения данных по current_user - вычисляем время жизни у refresh и access токенов из их дешифровки и отправляем в redis с этим оставшимся временем жизни
+    """
+
+    if await service_logout.blocked(current_user):
         raise HTTPException(
             status_code=status.HTTP_204_NO_CONTENT,
             detail="Successful logout."

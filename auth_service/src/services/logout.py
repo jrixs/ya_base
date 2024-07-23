@@ -5,7 +5,8 @@ from services.base_services import (
     BaseService, RedisStorage,
     PostgresDB, DB, Storage
     )
-from core.jwt import verify_token, get_secret_key
+from schemas.user import UserData
+from core.config import settings
 
 from fastapi import Depends
 
@@ -15,27 +16,27 @@ class BlockedToken(BaseService):
     def __init__(self, db: DB, storage: Storage):
         super().__init__(db=db, storage=storage)
 
-    async def blocked(self, login: str,
-                      access_token: str,
-                      refresh_token: str) -> bool:
+    async def blocked(self, user: UserData) -> bool:
 
-        secret_key = get_secret_key(login)
-        if blocked_token(access_token, secret_key) and \
-           blocked_token(refresh_token, secret_key):
+        await self._storage.set(user.access_token, user.username,
+                                settings.life_access_token)
+        await self._storage.set(user.refresh_token, user.username,
+                                settings.life_refresh_token)
+
+        if self.blocked_token(user):
             return True
         return False
 
-    async def blocked_token(self, token, secret_key) -> bool:
-        if not await self._storage.exists(token):
-            if verify_token(token, secret_key) is not None:
-                await self._storage.set(token, 'blocked')
-                return True
+    async def blocked_token(self, user: UserData) -> bool:
+        if await self._storage.exists(user.access_token) and \
+                await self._storage.exists(user.refresh_token):
+            return True
         return False
 
 
-def blocked_token(
+def service_logout(        
     redis: Redis = Depends(get_redis),
     session: SessionLocal = Depends(get_session),
-) -> bool:
+) -> BlockedToken:
     return BlockedToken(db=PostgresDB(session),
                         storage=RedisStorage(redis))

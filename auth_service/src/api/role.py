@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Body, HTTPException, Depends, Response
 
-from auth_service.src.schemas.role import RoleResponse,  RoleRequest
+from schemas.role import RoleResponse,  RoleRequest
 
 router = APIRouter(prefix="/role")
 

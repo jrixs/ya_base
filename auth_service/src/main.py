@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 import logging
 
 from api import not_auth_router, auth_router, admin_router
-from auth_service.src.core.exception import global_exception_handler
+from core.exception import global_exception_handler
 from core.config import settings
 from db import redis
 from db.postgres import engine

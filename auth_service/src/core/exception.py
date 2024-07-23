@@ -1,7 +1,9 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
-from loguru import logger
+import logging
+
+logger = logging.getLogger()
 
 
 def global_exception_handler(request: Request, exc: Exception):
@@ -24,4 +26,16 @@ class RefreshTokenInvalid(Exception):
 
 
 class IncorrectPasswordException(Exception):
+    pass
+
+
+class AccessTokenBlocked(Exception):
+    pass
+
+
+class RefreshTokenBlocked(Exception):
+    pass
+
+
+class AuthenticationIncorrect(Exception):
     pass

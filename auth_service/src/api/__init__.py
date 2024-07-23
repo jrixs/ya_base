@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from auth_service.src.api import (
+from api import (
     logout,
     not_auth,
     role,
@@ -8,7 +8,7 @@ from auth_service.src.api import (
     user
 )
 
-from auth_service.src.core.dependencies import verify_user_admin_rights, verify_user_access
+from core.dependencies import verify_user_admin_rights, verify_user_access
 
 # если юзер без авторизации
 not_auth_router = APIRouter()

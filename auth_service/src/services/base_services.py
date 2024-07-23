@@ -3,10 +3,7 @@ from redis.asyncio import Redis
 from abc import ABC, abstractmethod
 from typing import Any
 from sqlalchemy.orm import Session
-from loguru import logger
-
-
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 24 * 60 * 60  # 3 месяца
+from logging import Logger
 
 
 class DB(ABC):
@@ -39,7 +36,7 @@ class PostgresDB(DB):
             self.session.commit()
             return obj.id
         except Exception as e:
-            logger.error(e)
+            Logger.error(e)
             self.session.rollback()
             return
 
@@ -49,7 +46,7 @@ class PostgresDB(DB):
             self.session.commit()
             return True
         except Exception as e:
-            logger.error(e)
+            Logger.error(e)
             self.session.rollback()
             return False
 
@@ -58,7 +55,7 @@ class PostgresDB(DB):
             self.session.execute(statement)
             return True
         except Exception as e:
-            logger.error(e)
+            Logger.error(e)
             return False
 
     def delete(self, statement):
@@ -67,7 +64,7 @@ class PostgresDB(DB):
             self.session.commit()
             return True
         except Exception as e:
-            logger.error(e)
+            Logger.error(e)
             self.session.rollback()
             return False
 
@@ -91,8 +88,12 @@ class RedisStorage(Storage):
     async def get(self, cache_key: str) -> str | None:
         return await self.redis.get(cache_key)
 
-    async def set(self, cache_key: str, data: dict | list) -> Any | None:
-        await self.redis.set(cache_key, data, FILM_CACHE_EXPIRE_IN_SECONDS)
+    async def set(self,
+                  cache_key: str,
+                  data: dict | list,
+                  expire: int
+                  ) -> Any | None:
+        await self.redis.set(cache_key, data, expire)
 
 
 class BaseService(ABC):

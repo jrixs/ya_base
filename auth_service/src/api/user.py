@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Response
 
-from auth_service.src.core.dependencies import VerifiedUser
-from auth_service.src.schemas.user import UserHistoryResponse, BasePagination
+from core.dependencies import VerifiedUser
+from schemas.user import UserHistoryResponse, BasePagination
 
 router = APIRouter(prefix="/user")
 

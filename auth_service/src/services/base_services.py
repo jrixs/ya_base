@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 24 * 60 * 60  # 3 месяца
+FILM_CACHE_EXPIRE_IN_SECONDS = 7 * 24 * 60 * 60  # 7 дней
 
 
 class DB(ABC):
@@ -34,7 +34,6 @@ class PostgresDB(DB):
             self.session.commit()
             return obj.id
         except Exception as e:
-            print(e)
             self.session.rollback()
             return None
 
@@ -44,7 +43,6 @@ class PostgresDB(DB):
             self.session.commit()
             return True
         except Exception as e:
-            print(e)
             self.session.rollback()
             return False
 

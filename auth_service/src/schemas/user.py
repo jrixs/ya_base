@@ -2,9 +2,11 @@ from pydantic import BaseModel, EmailStr
 from uuid import UUID
 from datetime import datetime
 
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+
 
 class UserResponse(BaseModel):
     id: UUID

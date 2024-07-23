@@ -15,3 +15,8 @@ class TokensService(BaseModel):
     role: str
     access_token: Optional[str]
     refresh_token: Optional[str]
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str

@@ -1,19 +1,22 @@
 from fastapi import APIRouter, status, Body, HTTPException, Depends
 from services.logout import blocked_token
 
+from auth_service.src.core.dependencies import VerifiedUser
+
 router = APIRouter()
 
 
-@router.post("/",
+@router.post("/logout",
              summary="logout",
              description="logout",
              )
 async def logout(
-    service_logout: bool = Depends(blocked_token),
-    login: str = Body(..., embed=True),
-    access_token: str = Body(..., embed=True),
-    refresh_token: str = Body(..., embed=True)
+    current_user: VerifiedUser
 ):
+    """
+    после получения данных по current_user - вычисляем время жизни у refresh и access токенов из их дешифровки и отправляем в redis с этим оставшимся временем жизни
+    """
+
     blocked = await service_logout.blocked(
         login=login,
         access_token=access_token,

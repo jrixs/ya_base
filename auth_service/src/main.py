@@ -1,17 +1,15 @@
 from contextlib import asynccontextmanager
 import logging
 
-from api import test, login, logout
+from api import not_auth_router, auth_router, admin_router
+from auth_service.src.core.exception import global_exception_handler
 from core.config import settings
 from db import redis
 from db.postgres import engine
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
-from api.registration import router as registration_router
 
 from fastapi import FastAPI
-
-from models.auth_service import Role
 
 logger = logging.getLogger()
 
@@ -23,7 +21,7 @@ async def lifespan(app: FastAPI):
     yield
     await redis.redis.close()
     engine.dispose()
-    
+
 
 app = FastAPI(
     # Конфигурируем название проекта.
@@ -37,10 +35,9 @@ app = FastAPI(
     # Можно сразу сделать небольшую оптимизацию сервиса
     # и заменить стандартный JSON-сериализатор на более шуструю версию, написанную на Rust
     default_response_class=ORJSONResponse,
+    exception_handlers={Exception: global_exception_handler}
 )
 
-app.include_router(test.router, prefix="/auth/test", tags=["test"])
-app.include_router(registration_router, prefix="/auth", tags=["registration"])
-app.include_router(login.router, prefix="/auth/login", tags=["login"])
-app.include_router(logout.router, prefix="/auth/logout", tags=["logout"])
-
+app.include_router(not_auth_router)
+app.include_router(auth_router)
+app.include_router(admin_router)

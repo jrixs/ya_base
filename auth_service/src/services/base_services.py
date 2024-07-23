@@ -1,8 +1,9 @@
 
 from redis.asyncio import Redis
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
+from sqlalchemy.orm import Session
+from loguru import logger
 
 
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 24 * 60 * 60  # 3 месяца
@@ -19,13 +20,17 @@ class DB(ABC):
         ...
 
     @abstractmethod
-    async def query(self, *args, **kwargs) -> Any | None:
+    async def select(self, *args, **kwargs) -> Any | None:
+        ...
+
+    @abstractmethod
+    async def delete(self, *args, **kwargs) -> Any | None:
         ...
 
 
 class PostgresDB(DB):
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: Session):
         self.session = session
 
     def insert(self, obj) -> Any | None:
@@ -34,22 +39,37 @@ class PostgresDB(DB):
             self.session.commit()
             return obj.id
         except Exception as e:
-            print(e)
+            logger.error(e)
             self.session.rollback()
-            return None
+            return
 
-    def update(self, obj) -> bool:
+    def update(self, statement) -> bool:
         try:
-            self.session.add(obj)
+            self.session.execute(statement)
             self.session.commit()
             return True
         except Exception as e:
-            print(e)
+            logger.error(e)
             self.session.rollback()
             return False
 
-    def query(self, obj, filter: dict):
-        return self.session.query(obj).filter_by(**filter).first()
+    def select(self, statement):
+        try:
+            self.session.execute(statement)
+            return True
+        except Exception as e:
+            logger.error(e)
+            return False
+
+    def delete(self, statement):
+        try:
+            self.session.execute(statement)
+            self.session.commit()
+            return True
+        except Exception as e:
+            logger.error(e)
+            self.session.rollback()
+            return False
 
 
 class Storage(ABC):
@@ -71,7 +91,7 @@ class RedisStorage(Storage):
     async def get(self, cache_key: str) -> str | None:
         return await self.redis.get(cache_key)
 
-    async def set(self, cache_key: str, data: Dict | List) -> Any | None:
+    async def set(self, cache_key: str, data: dict | list) -> Any | None:
         await self.redis.set(cache_key, data, FILM_CACHE_EXPIRE_IN_SECONDS)
 
 

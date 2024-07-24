@@ -1,11 +1,13 @@
-from fastapi import APIRouter, status, HTTPException, Depends, Response
+from fastapi import APIRouter, status, HTTPException, Depends, Response, Form
 from services.login import get_tokens, GetTokensService
 from schemas.login import LoginRequest
 from schemas.user import UserData
 from core.exception import AuthenticationIncorrect
+from db.postgres import get_session
+from schemas.user import UserCreate, UserResponse
+from services.registration import RegService, registation_tokens
 
 router = APIRouter()
-
 
 @router.post("/login")
 async def login_to_app(
@@ -34,3 +36,19 @@ async def login_to_app(
 #     """проверяем наличие юзера в базе. если юзер имеется - HTTP_400_BAD_REQUEST с указанием того, что юзернейм/имейл существуют.
 #     если юзера нет, производим регистрацию, назначаем базовую роль (её определит суперюзер), шифруем токены и даём ответ 200"""
 
+@router.post("/register")
+async def register_user(
+    username: str = Form(..., description="username of the user"),
+    email: str = Form(..., description="Email address of the user"),
+    password: str = Form(..., description="Password for the user"),
+    reg_service: RegService = Depends(registation_tokens)
+    ):
+    user = UserCreate(username=username, email=email, password=password)
+    exist_user = await reg_service.check_user(user=user)
+    if exist_user:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User_already_exist")
+    
+    registered = await reg_service.create_user(user=user)
+    if registered:
+        return Response(status_code=200)
+    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="registration error")

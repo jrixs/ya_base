@@ -39,3 +39,4 @@ class RefreshTokenBlocked(Exception):
 
 class AuthenticationIncorrect(Exception):
     pass
+

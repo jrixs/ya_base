@@ -25,10 +25,10 @@ class UserResponse(BaseModel):
 
 
 class UserData(BaseModel):
-    id: UUID
+    id: str
     username: str
     email: EmailStr
-    role_id: UUID
+    role_id: str
     is_superuser: bool
     access_token: str | None = None
     refresh_token: str | None = None

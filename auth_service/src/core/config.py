@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     life_access_token: int = Field(60 * 60 * 3, env="LIFE_ACCESS_TOKEN")
     life_refresh_token: int = Field(60 * 60 * 24 * 7, env="LIFE_REFRESH_TOKEN")
 
+    # Добавьте все необходимые домены
+    origins: list = Field([
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://www.example.com"
+        ], env="ORIGINS")
+
     postgres_indexes_naming_convention: dict = {
         "ix": "%(column_0_label)s_idx",
         "uq": "%(table_name)s_%(column_0_name)s_key",

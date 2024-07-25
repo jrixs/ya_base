@@ -10,16 +10,15 @@ from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    redis.redis = Redis(host=settings.redis_host, port=settings.redis_port)
     engine.connect()
     yield
-    await redis.redis.close()
     engine.dispose()
 
 
@@ -36,6 +35,26 @@ app = FastAPI(
     # и заменить стандартный JSON-сериализатор на более шуструю версию, написанную на Rust
     default_response_class=ORJSONResponse,
     exception_handlers={Exception: global_exception_handler}
+)
+
+
+@app.router.on_startup.append
+async def startup():
+    redis.redis = Redis(host=settings.redis_host, port=settings.redis_port)
+
+
+@app.router.on_shutdown.append
+async def shutdown():
+    await redis.redis.close()
+
+origins = settings.origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(not_auth_router)

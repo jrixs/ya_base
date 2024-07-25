@@ -30,7 +30,6 @@ class GetTokensService(BaseService):
         # user: User = self._db.select(statement)
         user = self._db.session.query(User).filter(
             User.username == auth.username).first()
-        print(user)
         if user:
             if check_password(auth.password, user.secret.password):
                 data = UserData(**user.__dict__)

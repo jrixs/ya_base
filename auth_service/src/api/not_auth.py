@@ -6,6 +6,7 @@ from core.exception import AuthenticationIncorrect
 from db.postgres import get_session
 from schemas.user import UserCreate, UserResponse
 from services.registration import RegService, registation_tokens
+from pydantic import ValidationError
 
 router = APIRouter()
 
@@ -43,7 +44,10 @@ async def register_user(
     password: str = Form(..., description="Password for the user"),
     reg_service: RegService = Depends(registation_tokens)
     ):
-    user = UserCreate(username=username, email=email, password=password)
+    try:
+        user = UserCreate(username=username, email=email, password=password)
+    except ValidationError:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid email")
     exist_user = await reg_service.check_user(user=user)
     if exist_user:
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User_already_exist")

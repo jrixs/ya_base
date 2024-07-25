@@ -3,7 +3,7 @@ from redis.asyncio import Redis
 from abc import ABC, abstractmethod
 from typing import Any
 from sqlalchemy.orm import Session
-from logging import Logger
+from loguru import logger
 
 
 class DB(ABC):
@@ -34,29 +34,29 @@ class PostgresDB(DB):
         try:
             self.session.add(obj)
             self.session.commit()
-            return obj.id
+            return obj
         except Exception as e:
-            Logger.error(e)
+            logger.error(e)
             self.session.rollback()
             return
 
-    def update(self, statement) -> bool:
+    def update(self, statement) -> Any:
         try:
-            self.session.execute(statement)
+            data = self.session.execute(statement)
             self.session.commit()
-            return True
+            return data
         except Exception as e:
-            Logger.error(e)
+            logger.error(e)
             self.session.rollback()
             return False
 
     def select(self, statement):
         try:
-            self.session.execute(statement)
-            return True
+            data = self.session.execute(statement)
+            return data
         except Exception as e:
-            Logger.error(e)
-            return False
+            logger.error(e)
+            return
 
     def delete(self, statement):
         try:
@@ -64,7 +64,7 @@ class PostgresDB(DB):
             self.session.commit()
             return True
         except Exception as e:
-            Logger.error(e)
+            logger.error(e)
             self.session.rollback()
             return False
 

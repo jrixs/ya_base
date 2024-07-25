@@ -3,27 +3,37 @@ from typing import Annotated
 from fastapi import HTTPException, status, Depends, Request
 from sqlalchemy.orm import Session
 from redis.asyncio import Redis
+from loguru import logger
 
-from db.postgres import get_session
-from db.redis import get_redis
+from connections import get_session, get_redis
 
-from core.exception import (
+from src.core.exception import (
     AccessTokenExpired,
     AccessTokenInvalid,
     RefreshTokenInvalid,
     AccessTokenBlocked
-    )
-from schemas.user import UserData
-from core.jwt import (
+)
+from src.schemas.user import UserData
+from src.core.jwt import (
     decode_token,
     verify_refresh_token,
     refresh_tokens,
     check_tokens_in_blocklist
-    )
-
+)
+from src.services.base_services import PostgresDB
 
 DBSession = Annotated[Session, Depends(get_session)]
 RedisSession = Annotated[Redis, Depends(get_redis)]
+
+
+def init_postgres_service(db_session: DBSession) -> PostgresDB:
+    try:
+        return PostgresDB(db_session)
+    except Exception:
+        logger.warning("Postgres Service was not initialized")
+
+
+PGService = Annotated[PostgresDB, Depends(init_postgres_service)]
 
 
 def verify_user_access(
@@ -39,8 +49,8 @@ def verify_user_access(
         check_tokens_in_blocklist(access_token, refresh_token, redis)
     except AccessTokenBlocked as err:
         raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail=err
-            )
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=err
+        )
 
     try:
         """декодятся данные и заполняется объект userdata, при возникновении ошибок - выбрасываем исключения"""

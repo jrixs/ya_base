@@ -1,25 +1,20 @@
 from contextlib import asynccontextmanager
-import logging
+from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
+from redis.asyncio import Redis
 
 from api import not_auth_router, auth_router, admin_router
 from core.exception import global_exception_handler
 from core.config import settings
-from db import redis
-from db.postgres import engine
-from fastapi.responses import ORJSONResponse
-from redis.asyncio import Redis
-
-from fastapi import FastAPI
-
-logger = logging.getLogger()
+from core.connections import redis_client, engine
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    redis.redis = Redis(host=settings.redis_host, port=settings.redis_port)
+    redis_client.redis = Redis(host=settings.redis_host, port=settings.redis_port)
     engine.connect()
     yield
-    await redis.redis.close()
+    await redis_client.redis.close()
     engine.dispose()
 
 
@@ -32,8 +27,6 @@ app = FastAPI(
     docs_url="/auth/openapi",
     # Адрес документации в формате OpenAPI
     openapi_url="/auth/openapi.json",
-    # Можно сразу сделать небольшую оптимизацию сервиса
-    # и заменить стандартный JSON-сериализатор на более шуструю версию, написанную на Rust
     default_response_class=ORJSONResponse,
     exception_handlers={Exception: global_exception_handler}
 )

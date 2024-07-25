@@ -1,21 +1,19 @@
-from fastapi import APIRouter, status, Body, HTTPException, Depends, Response
+from fastapi import APIRouter, status
 
-from schemas.role import RoleResponse,  RoleRequest
+from src.core.dependencies import PGService
+from src.schemas.user import UserResponse
+from src.db import users
 
 router = APIRouter(prefix="/user")
 
 
-@router.get("/{user_id}", status_code=status.HTTP_200_OK, response_model=list[RoleResponse])
-async def get_user() -> list[RoleResponse]:
-    pass
+@router.get("/{user_id}", status_code=status.HTTP_200_OK, response_model=UserResponse)
+async def get_user(db_service: PGService, user_id: str) -> UserResponse:
+    return await users.get_one_user(db_service, user_id)
 
 
-@router.put("/{user_id}/role/{role_id}", status_code=status.HTTP_200_OK)
-async def set_user_role(role_id: int, role_data: RoleRequest):
-    pass
+@router.put("/{user_id}/role/{role_id}", status_code=status.HTTP_200_OK, response_model=UserResponse)
+async def set_user_role(db_service: PGService, user_id: str, role_id: str):
+    return await users.update_user_role(db_service, user_uuid=user_id, role_uuid=role_id)
 
-
-@router.delete("/{user_id}/role/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def unset_role_from_user():
-    pass
 

@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import select, delete, update
 
 from src.schemas.role import RoleResponse, RoleRequest
@@ -18,8 +20,10 @@ async def get_all_roles(db_service: PostgresDB) -> list[RoleResponse]:
 
 
 async def add_new_role(db_service: PostgresDB, role_data: RoleRequest) -> RoleResponse:
-    new_role = db_service.insert(Role(**role_data.model_dump()))
-    return RoleResponse.model_validate(new_role)
+    new_role = Role(**role_data.model_dump())
+    new_role.id = uuid.uuid4()
+    created_role = db_service.insert(new_role)
+    return RoleResponse.model_validate(created_role)
 
 
 async def update_role_parameters(db_service: PostgresDB, uuid: str, role_data: RoleRequest):

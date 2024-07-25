@@ -18,7 +18,8 @@ from core.jwt import (
     decode_token,
     verify_refresh_token,
     refresh_tokens,
-    check_tokens_in_blocklist
+    check_tokens_in_blocklist,
+    get_secret_key
     )
 
 
@@ -30,8 +31,8 @@ def verify_user_access(
         request: Request,
         redis: RedisSession,
 ) -> UserData:
-    access_token: str = request.cookies.get("access_token")
-    refresh_token: str = request.cookies.get("refresh_token")
+    access_token: str = request.cookies.get("access")
+    refresh_token: str = request.cookies.get("refresh")
     username: str = request.cookies.get("username")
 
     try:
@@ -44,21 +45,21 @@ def verify_user_access(
 
     try:
         """декодятся данные и заполняется объект userdata, при возникновении ошибок - выбрасываем исключения"""
-        data: UserData = decode_token(access_token, username)
+        data: UserData = decode_token(access_token, get_secret_key(username))
         data.access_token = access_token
         data.refresh_token = refresh_token
     except AccessTokenExpired:
         """если рефреш токен нормальный, то он пересоздает access token, убирается в редис и создается новый рефреш. 
         иначе выбрасываем исключение"""
-        data: UserData = verify_refresh_token(refresh_token, username)
-        new_access_token, new_refresh_token = refresh_tokens(data, redis)
-        data.access_token = new_access_token
-        data.refresh_token = new_refresh_token
-    except (AccessTokenInvalid, RefreshTokenInvalid):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED
-        )
-
+        try:
+            data: UserData = verify_refresh_token(refresh_token, username)
+            new_access_token, new_refresh_token = refresh_tokens(data, redis)
+            data.access_token = new_access_token
+            data.refresh_token = new_refresh_token
+        except (AccessTokenInvalid, RefreshTokenInvalid):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
     return data
 
 

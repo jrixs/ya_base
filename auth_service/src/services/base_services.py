@@ -91,9 +91,9 @@ class RedisStorage(Storage):
 
     async def set(self,
                   cache_key: str,
-                  data: dict | list,
+                  data: Any,
                   expire: int
-                  ) -> Any | None:
+                  ) -> Any:
         await self.redis.set(cache_key, data, expire)
 
 

@@ -56,7 +56,10 @@ async def register_user(
     reg_service: RegService = Depends(registation_tokens),
     add_login_information: Event = Depends(service_event)
 ):
-    user = UserCreate(username=username, email=email, password=password)
+    try:
+        user = UserCreate(username=username, email=email, password=password)
+    except ValidationError:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid email")
     exist_user = await reg_service.check_user(user=user)
     if exist_user:
         return HTTPException(

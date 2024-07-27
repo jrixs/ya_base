@@ -60,3 +60,9 @@ class UserHistory(BaseModel):
 class UserHistoryResponse(BaseModel):
     total_count: int
     data: list[UserHistory]
+
+
+class UserChange(BaseModel):
+    username: str
+    email: EmailStr
+    password: str

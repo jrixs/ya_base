@@ -1,7 +1,7 @@
 from typing import Optional
 
-from db.redis import get_redis
-from db.postgres import get_session, SessionLocal
+from core.connections import get_redis
+from core.connections import get_session, SessionLocal
 from redis.asyncio import Redis
 from services.base_services import (
     BaseService, RedisStorage,
@@ -15,7 +15,6 @@ from core.jwt import create_token, get_secret_key
 from core.config import settings
 from core.passwd import check_password
 from core.exception import AuthenticationIncorrect
-from sqlalchemy import select
 
 from fastapi import Depends
 

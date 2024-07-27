@@ -4,8 +4,7 @@ import logging
 from api import not_auth_router, auth_router, admin_router
 from core.exception import global_exception_handler
 from core.config import settings
-from db import redis
-from db.postgres import engine
+from core import connections
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 
@@ -17,9 +16,9 @@ logger = logging.getLogger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    engine.connect()
+    connections.engine.connect()
     yield
-    engine.dispose()
+    connections.engine.dispose()
 
 
 app = FastAPI(
@@ -40,12 +39,13 @@ app = FastAPI(
 
 @app.router.on_startup.append
 async def startup():
-    redis.redis = Redis(host=settings.redis_host, port=settings.redis_port)
+    connections.redis_connect = Redis(
+        host=settings.redis_host, port=settings.redis_port)
 
 
 @app.router.on_shutdown.append
 async def shutdown():
-    await redis.redis.close()
+    await connections.redis_connect.close()
 
 origins = settings.origins
 

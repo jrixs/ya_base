@@ -35,17 +35,17 @@ class PostgresDB(DB):
         try:
             self.session.add(obj)
             self.session.commit()
-            return obj.id
+            return obj
         except Exception as e:
             logger.error(e)
             self.session.rollback()
             return
 
-    def update(self, statement) -> bool:
+    def update(self, statement) -> Any:
         try:
-            self.session.execute(statement)
+            data = self.session.execute(statement)
             self.session.commit()
-            return True
+            return data
         except Exception as e:
             logger.error(e)
             self.session.rollback()
@@ -53,11 +53,11 @@ class PostgresDB(DB):
 
     def select(self, statement):
         try:
-            self.session.execute(statement)
-            return True
+            data = self.session.execute(statement)
+            return data
         except Exception as e:
             logger.error(e)
-            return False
+            return
 
     def delete(self, statement):
         try:

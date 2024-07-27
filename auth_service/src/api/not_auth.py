@@ -25,7 +25,6 @@ async def login_to_app(
     если всё ок, то возвращаются access, refresh токены, добавляются данные о входе
     если пароль неверен, то 401"""
     try:
-        # response = Response(status_code=status.HTTP_202_ACCEPTED)
         tokens: UserData = await service_login.get(login_data)
         response.set_cookie(key="access", value=tokens.access_token,
                             httponly=True, expires=settings.life_access_token
@@ -44,7 +43,7 @@ async def login_to_app(
         return {"detail": "Successful login"}
     except AuthenticationIncorrect:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid username or password")                            
+                            detail="Invalid username or password")
 
 
 @router.post("/register")

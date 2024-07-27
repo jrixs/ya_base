@@ -60,4 +60,3 @@ class UserHistory(BaseModel):
 class UserHistoryResponse(BaseModel):
     total_count: int
     data: list[UserHistory]
-

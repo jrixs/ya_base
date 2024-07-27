@@ -1,5 +1,5 @@
-from db.redis import get_redis
-from db.postgres import get_session, SessionLocal
+from core.connections import get_redis
+from core.connections import get_session, SessionLocal
 from models.auth_data import History
 from redis.asyncio import Redis
 from services.base_services import (
@@ -7,7 +7,6 @@ from services.base_services import (
     PostgresDB, DB, Storage
     )
 from schemas.event import EventCreate
-from core.config import settings
 from typing import List
 import uuid
 from uuid import UUID

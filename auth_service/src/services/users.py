@@ -22,7 +22,7 @@ class GetUserInfo(BaseService):
 
     def get_info(self, auth: UserData) -> UserResponse:
         user = self._db.session.query(User).filter(
-            User.id == auth.id).first()
+            User.id == auth.id).one_or_none()
         return UserResponse(**user.__dict__)
 
     def get_history(self, auth: UserData, offset: int, limit: int

@@ -9,6 +9,7 @@ from schemas.user import UserCreate
 from services.registration import RegService, registation_tokens
 from core.config import settings
 from schemas.event import EventCreate
+from pydantic import ValidationError
 
 router = APIRouter()
 
@@ -48,17 +49,19 @@ async def login_to_app(
 
 @router.post("/register")
 async def register_user(
+    reg_data: UserCreate,
     request: Request,
-    username: str = Form(..., description="username of the user"),
-    email: str = Form(..., description="Email address of the user"),
-    password: str = Form(..., description="Password for the user"),
     reg_service: RegService = Depends(registation_tokens),
     add_login_information: Event = Depends(service_event)
 ):
-    user = UserCreate(username=username, email=email, password=password)
+    try:
+        user = UserCreate(username=reg_data.username, 
+                          email=reg_data.email, password=reg_data.password)
+    except ValidationError:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid email")
     exist_user = await reg_service.check_user(user=user)
     if exist_user:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User_already_exist")
 
@@ -69,7 +72,7 @@ async def register_user(
             user_agent=f"register.{request.headers.get("user-agent")}"
             )
         await add_login_information.set(event)
-        return Response(status_code=200)
-    return HTTPException(
+        return {"detail": "Successful registration"}
+    raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="registration error")

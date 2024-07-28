@@ -1,14 +1,18 @@
-from fastapi import APIRouter, status, HTTPException, Depends, Response, Body
-from services.login import get_tokens, GetTokensService
-from schemas.login import LoginRequest
-from schemas.user import UserData
-from core.exception import AuthenticationIncorrect
+from fastapi import APIRouter, status, Depends, Response, Body
+from services.verify import get_verify, GetVerify
+from schemas.verify import VerifyToken
 
-router = APIRouter(prefix="/service")
+router = APIRouter()
 
 
 @router.post("/verify", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
-async def verify_token_from_another_service(token: str = Body()) -> Response:
+async def verify_token_from_another_service(
+    token: VerifyToken,
+    service_user: GetVerify = Depends(get_verify)
+) -> Response:
     """Верифицирует токен, отправленный на проверку от другого сервиса.
     При успехе отправляет пустой 204 ответ, при неуспехе 401 Unauthorized"""
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    if await service_user.check(token):
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)

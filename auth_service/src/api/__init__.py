@@ -4,6 +4,7 @@ from api import (
     logout,
     not_auth,
     role,
+    service_verify,
     user_management,
     user
 )
@@ -13,6 +14,7 @@ from core.dependencies import verify_user_admin_rights, verify_user_access
 # если юзер без авторизации
 not_auth_router = APIRouter(prefix="/auth")
 not_auth_router.include_router(not_auth.router, tags=["Not Auth"])
+not_auth_router.include_router(service_verify.router, tags=["Service Verify"])
 
 # если юзер авторизовался
 auth_router = APIRouter(prefix="/auth", dependencies=[Depends(verify_user_access)])

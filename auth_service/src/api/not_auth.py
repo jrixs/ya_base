@@ -1,5 +1,6 @@
 from fastapi import (APIRouter, status, HTTPException,
                      Depends, Response, Request, Form)
+from fastapi.responses import JSONResponse
 from services.login import get_tokens, GetTokensService
 from services.event import service_event, Event
 from schemas.login import LoginRequest

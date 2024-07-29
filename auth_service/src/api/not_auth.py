@@ -38,7 +38,7 @@ async def login_to_app(
                             )
         event = EventCreate(
             user_id=tokens.id,
-            user_agent=f"login.{request.headers.get("user-agent")}"
+            user_agent=f"login.{request.headers.get('user-agent')}"
             )
         await add_login_information.set(event)
         return {"detail": "Successful login"}
@@ -69,7 +69,7 @@ async def register_user(
     if registered:
         event = EventCreate(
             user_id=registered.id,
-            user_agent=f"register.{request.headers.get("user-agent")}"
+            user_agent=f"register.{request.headers.get('user-agent')}"
             )
         await add_login_information.set(event)
         return {"detail": "Successful registration"}

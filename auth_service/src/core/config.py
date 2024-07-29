@@ -45,6 +45,11 @@ class Settings(BaseSettings):
         "pk": "%(table_name)s_pkey",
     }
 
+    # username и пароль для суперюзера
+    superuser_username: str = Field("superadmin")
+    superuser_password: str = Field("password")
+    superuser_email: str = Field("admin@example.com")
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

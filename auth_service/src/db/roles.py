@@ -14,9 +14,15 @@ async def get_one_role(db_service: PostgresDB, uuid: str) -> RoleResponse:
 
 
 async def get_all_roles(db_service: PostgresDB) -> list[RoleResponse]:
-    statement = select(Role).order_by(Role.created_at)
+    statement = select(Role)
     data = db_service.select_few(statement)
     return [RoleResponse.model_validate(item) for item in data]
+
+
+async def get_guest_role_id(db_service: PostgresDB) -> str:
+    statement = select(Role.id).where(Role.name == "guest")
+    role_id = db_service.select_one(statement)[0]
+    return role_id
 
 
 async def add_new_role(db_service: PostgresDB, role_data: RoleRequest) -> RoleResponse:

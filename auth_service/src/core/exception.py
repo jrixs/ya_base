@@ -39,3 +39,11 @@ class RefreshTokenBlocked(Exception):
 
 class AuthenticationIncorrect(Exception):
     pass
+
+
+class UserExistConflict(ValueError):
+    pass
+
+
+class UserRolesAreNotCreated(ValueError):
+    pass

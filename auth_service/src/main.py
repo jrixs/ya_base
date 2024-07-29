@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-import logging
 
 from api import not_auth_router, auth_router, admin_router
 from core.exception import global_exception_handler
@@ -10,8 +9,6 @@ from redis.asyncio import Redis
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-logger = logging.getLogger()
 
 
 @asynccontextmanager
@@ -46,6 +43,7 @@ async def startup():
 @app.router.on_shutdown.append
 async def shutdown():
     await connections.redis_connect.close()
+
 
 origins = settings.origins
 

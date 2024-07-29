@@ -1,25 +1,20 @@
-from fastapi import APIRouter, status, Depends, Response, Request
-from services.logout import service_logout, BlockedToken
-from services.event import service_event, Event
-from schemas.event import EventCreate
+from fastapi import APIRouter, status, Response, Request
 
-from core.dependencies import VerifiedUser
+from db.history import create_new_history_record
+from services.logout import LogoutService
+
+from core.dependencies import VerifiedUser, PGService
 
 router = APIRouter()
 
 
-@router.post("/logout",
-             summary="logout",
-             description="logout",
-             status_code=status.HTTP_200_OK,
-             response_class=Response
-             )
+@router.post("/logout", status_code=status.HTTP_200_OK, response_class=Response)
 async def logout(
-    current_user: VerifiedUser,
-    request: Request,
-    response: Response,
-    service_logout: BlockedToken = Depends(service_logout),
-    add_login_information: Event = Depends(service_event)
+        db_service: PGService,
+        current_user: VerifiedUser,
+        request: Request,
+        response: Response,
+        service_logout: LogoutService,
 ) -> Response:
     """
     после получения данных по current_user - вычисляем время жизни у refresh и
@@ -31,17 +26,15 @@ async def logout(
     response.delete_cookie(key="refresh", httponly=True)
     response.delete_cookie(key="username", httponly=True)
 
-    # Блокироака ключей
+    # Блокировка ключей
     if await service_logout.blocked(current_user):
 
         # Запись события
-        event = EventCreate(
-            user_id=current_user.id,
-            user_agent=f"logout.{request.headers.get('user-agent')}"
-            )
-        await add_login_information.set(event)
+        await create_new_history_record(db_service, user_id=current_user.id,
+                                        record_data=f"logout.{request.headers.get('user-agent')}")
 
-        return Response(status_code=status.HTTP_200_OK, content="Successful logout.")
+        return Response(status_code=status.HTTP_200_OK,
+                        content="Successful logout.")
     else:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED,
                         content="Failed logout.")

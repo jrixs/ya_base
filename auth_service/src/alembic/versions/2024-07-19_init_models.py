@@ -35,6 +35,7 @@ def upgrade() -> None:
                     sa.ForeignKeyConstraint(['role_id'], ['auth_service.role_table.id'], ondelete='SET NULL'),
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('email'),
+                    sa.UniqueConstraint('username'),
                     schema='auth_data'
                     )
     op.create_table('user_history',

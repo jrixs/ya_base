@@ -51,9 +51,17 @@ class PostgresDB(DB):
             self.session.rollback()
             return False
 
-    def select(self, statement):
+    def select_few(self, statement):
         try:
-            data = self.session.execute(statement)
+            data = self.session.execute(statement).all()
+            return data
+        except Exception as e:
+            logger.error(e)
+            return
+
+    def select_one(self, statement):
+        try:
+            data = self.session.execute(statement).one_or_none()
             return data
         except Exception as e:
             logger.error(e)

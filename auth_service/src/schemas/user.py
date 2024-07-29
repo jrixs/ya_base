@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
 from datetime import datetime
 
@@ -47,8 +47,8 @@ class RegistrationResponse(BaseModel):
 
 
 class BasePagination(BaseModel):
-    limit: int = 0
-    offset: int = 0
+    limit: int = Field(default=10, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
 
 
 class UserHistory(BaseModel):

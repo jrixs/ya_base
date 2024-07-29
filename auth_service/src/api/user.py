@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Response, Depends, Query, status, Request
+from fastapi import APIRouter, Response, Depends, status, Request
 from core.dependencies import VerifiedUser, HTTPException
 from responses.user import UserResponse, UserHistoryResponse
 from services.users import GetUserInfo, get_user_info
 from services.event import service_event, Event
 from schemas.event import EventCreate
 from schemas.user import UserChange
+
+from schemas.user import BasePagination
 
 router = APIRouter()
 
@@ -33,7 +35,7 @@ async def update_user_information(
         # Запись события
         event = EventCreate(
             user_id=current_user.id,
-            user_agent=f"put.user.{request.headers.get("user-agent")}"
+            user_agent=f"put.user.{request.headers.get('user-agent')}"
             )
         await add_login_information.set(event)
         return Response(status_code=status.HTTP_200_OK,
@@ -46,10 +48,9 @@ async def update_user_information(
 @router.get("/history")
 async def get_user_history(
     current_user: VerifiedUser,
-    limit: int = Query(10, ge=1, le=100),
-    offset: int = Query(0, ge=0),
+    pagination_options: BasePagination = Depends(),
     service_user: GetUserInfo = Depends(get_user_info)
 ) -> UserHistoryResponse:
     """запрашиваем историю входов юзера с базовой настройкой
     пагинации limit/offset"""
-    return service_user.get_history(current_user, offset, limit)
+    return service_user.get_history(current_user, pagination_options.offset, pagination_options.limit)

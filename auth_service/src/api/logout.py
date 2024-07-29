@@ -35,7 +35,7 @@ async def logout(
         # Запись события
         event = EventCreate(
             user_id=current_user.id,
-            user_agent=f"logout.{request.headers.get("user-agent")}"
+            user_agent=f"logout.{request.headers.get('user-agent')}"
             )
         await add_login_information.set(event)
 

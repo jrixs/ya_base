@@ -54,8 +54,8 @@ services:
     ports:
       - "4081:4081"
     restart: unless-stopped
-    #command: sh -cx "alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
-    command: sh -cx "alembic downgrade base && alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
+    #command: sh -cx "alembic upgrade head && python3 superuser_add.py && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
+    command: sh -cx "alembic downgrade base && alembic upgrade head && python3 superuser_add.py && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
 
   # auth2: 
   #   <<: *base-auth

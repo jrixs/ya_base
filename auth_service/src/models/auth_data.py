@@ -15,10 +15,11 @@ class User(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     username: Mapped[str] = mapped_column(String(50))
     email: Mapped[str] = mapped_column(String(320), unique=True)
-    role_id: Mapped[str] = mapped_column(String(36), ForeignKey("auth_service.role_table.id", ondelete="SET NULL"))
+    role_id: Mapped[str] = mapped_column(String(36), ForeignKey("auth_service.role_table.id", ondelete="SET NULL"),
+                                         nullable=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, server_default="False")
     joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, onupdate=datetime.utcnow, nullable=True)
 
     secret: Mapped["Secret"] = relationship(back_populates="user")
     role: Mapped["Role"] = relationship(back_populates="user")

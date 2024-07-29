@@ -9,13 +9,13 @@ from models.auth_service import Role
 
 async def get_one_role(db_service: PostgresDB, uuid: str) -> RoleResponse:
     statement = select(Role).where(Role.id == uuid)
-    data = db_service.select(statement)
+    data = db_service.select_one(statement)
     return RoleResponse.model_validate(data)
 
 
 async def get_all_roles(db_service: PostgresDB) -> list[RoleResponse]:
     statement = select(Role).order_by(Role.created_at)
-    data = db_service.select(statement)
+    data = db_service.select_few(statement)
     return [RoleResponse.model_validate(item) for item in data]
 
 

@@ -29,7 +29,7 @@ class GetUserInfo(BaseService):
                     ) -> UserHistoryResponse:
 
         history = self._db.session.query(History).filter(
-            History.user_id == auth.id).offset(offset).limit(limit).all()
+            History.user_id == auth.id).offset(offset * limit).limit(limit).all()
 
         history = [{'last_logged_at': entry.last_logged_at,
                     'user_agent': entry.user_agent} for entry in history]

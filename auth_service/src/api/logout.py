@@ -1,4 +1,5 @@
 from fastapi import APIRouter, status, Depends, Response, Request
+from fastapi.responses import JSONResponse
 from services.logout import service_logout, BlockedToken
 from services.event import service_event, Event
 from schemas.event import EventCreate
@@ -10,7 +11,9 @@ router = APIRouter()
 
 @router.post("/logout",
              summary="logout",
-             description="logout"
+             description="logout",
+             status_code=status.HTTP_200_OK,
+             response_class=Response
              )
 async def logout(
     current_user: VerifiedUser,
@@ -18,28 +21,33 @@ async def logout(
     response: Response,
     service_logout: BlockedToken = Depends(service_logout),
     add_login_information: Event = Depends(service_event)
-):
+) -> Response:
     """
     после получения данных по current_user - вычисляем время жизни у refresh и
     access токенов из их дешифровки и отправляем в redis с этим оставшимся
     временем жизни
     """
-    # Удаление cookies
-    response.set_cookie(key="access", value='', httponly=True, max_age=0)
-    response.set_cookie(key="refresh", value='', httponly=True, max_age=0)
-    response.set_cookie(key="username", value='', httponly=True, max_age=0)
 
     # Блокироака ключей
     if await service_logout.blocked(current_user):
+        response = JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"detail": "Successful logout."})
+      
+        # Удаление cookies
+        response.delete_cookie(key="access", httponly=True)
+        response.delete_cookie(key="refresh", httponly=True)
+        response.delete_cookie(key="username", httponly=True)
 
         # Запись события
         event = EventCreate(
             user_id=current_user.id,
-            user_agent=f"logout.{request.headers.get("user-agent")}"
+            user_agent=f"logout.{request.headers.get('user-agent')}"
             )
         await add_login_information.set(event)
 
-        return {"detail": "Successful logout."}
+        return response
     else:
-        return Response(status_code=status.HTTP_401_UNAUTHORIZED,
-                        content="Failed logout.")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Failed logout."})

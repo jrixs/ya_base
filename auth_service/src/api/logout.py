@@ -27,13 +27,17 @@ async def logout(
     access токенов из их дешифровки и отправляем в redis с этим оставшимся
     временем жизни
     """
-    # Удаление cookies
-    response.delete_cookie(key="access", httponly=True)
-    response.delete_cookie(key="refresh", httponly=True)
-    response.delete_cookie(key="username", httponly=True)
 
     # Блокироака ключей
     if await service_logout.blocked(current_user):
+        response = JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"detail": "Successful logout."})
+      
+        # Удаление cookies
+        response.delete_cookie(key="access", httponly=True)
+        response.delete_cookie(key="refresh", httponly=True)
+        response.delete_cookie(key="username", httponly=True)
 
         # Запись события
         event = EventCreate(
@@ -42,7 +46,8 @@ async def logout(
             )
         await add_login_information.set(event)
 
-        return Response(status_code=status.HTTP_200_OK, content="Successful logout.")
+        return response
     else:
-        return Response(status_code=status.HTTP_401_UNAUTHORIZED,
-                        content="Failed logout.")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Failed logout."})

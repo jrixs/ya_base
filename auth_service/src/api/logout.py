@@ -10,7 +10,9 @@ router = APIRouter()
 
 @router.post("/logout",
              summary="logout",
-             description="logout"
+             description="logout",
+             status_code=status.HTTP_200_OK,
+             response_class=Response
              )
 async def logout(
     current_user: VerifiedUser,
@@ -18,16 +20,16 @@ async def logout(
     response: Response,
     service_logout: BlockedToken = Depends(service_logout),
     add_login_information: Event = Depends(service_event)
-):
+) -> Response:
     """
     после получения данных по current_user - вычисляем время жизни у refresh и
     access токенов из их дешифровки и отправляем в redis с этим оставшимся
     временем жизни
     """
     # Удаление cookies
-    response.set_cookie(key="access", value='', httponly=True, max_age=0)
-    response.set_cookie(key="refresh", value='', httponly=True, max_age=0)
-    response.set_cookie(key="username", value='', httponly=True, max_age=0)
+    response.delete_cookie(key="access", httponly=True)
+    response.delete_cookie(key="refresh", httponly=True)
+    response.delete_cookie(key="username", httponly=True)
 
     # Блокироака ключей
     if await service_logout.blocked(current_user):
@@ -39,7 +41,7 @@ async def logout(
             )
         await add_login_information.set(event)
 
-        return {"detail": "Successful logout."}
+        return Response(status_code=status.HTTP_200_OK, content="Successful logout.")
     else:
         return Response(status_code=status.HTTP_401_UNAUTHORIZED,
                         content="Failed logout.")

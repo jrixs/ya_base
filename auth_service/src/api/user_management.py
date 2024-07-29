@@ -13,5 +13,5 @@ async def get_user(db_service: PGService, user_id: str) -> UserResponse:
 
 
 @router.put("/{user_id}/role/{role_id}", status_code=status.HTTP_200_OK, response_model=UserResponse)
-async def set_user_role(db_service: PGService, user_id: str, role_id: str):
+async def set_user_role(db_service: PGService, user_id: str, role_id: str) -> UserResponse:
     return await users.update_user_role(db_service, user_uuid=user_id, role_uuid=role_id)

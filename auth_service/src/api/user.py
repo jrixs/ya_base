@@ -11,7 +11,7 @@ from schemas.user import BasePagination
 router = APIRouter()
 
 
-@router.get("/user")
+@router.get("/user", status_code=status.HTTP_200_OK, response_model=UserResponse)
 async def user_information(
     current_user: VerifiedUser,
     service_user: GetUserInfo = Depends(get_user_info)
@@ -20,14 +20,14 @@ async def user_information(
     return service_user.get_info(current_user)
 
 
-@router.put("/user")
+@router.put("/user", status_code=status.HTTP_200_OK, response_class=Response)
 async def update_user_information(
     current_user: VerifiedUser,
     request: Request,
     user_data: UserChange,
     service_user: GetUserInfo = Depends(get_user_info),
     add_login_information: Event = Depends(service_event)
-):
+) -> Response:
     """обновляем информацию о пользователе (имейл, пароль, юзернейм), после
     чего производим процесс шифрования пароля, инвалидации текущих токенов,
     выдачи новых токенов"""
@@ -45,7 +45,7 @@ async def update_user_information(
         detail="Unsuccessful change.")
 
 
-@router.get("/history")
+@router.get("/history", status_code=status.HTTP_200_OK, response_model=UserHistoryResponse)
 async def get_user_history(
     current_user: VerifiedUser,
     pagination_options: BasePagination = Depends(),

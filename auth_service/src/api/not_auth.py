@@ -14,14 +14,14 @@ from pydantic import ValidationError
 router = APIRouter()
 
 
-@router.post("/login")
+@router.post("/login", status_code=status.HTTP_200_OK, response_class=Response)
 async def login_to_app(
     login_data: LoginRequest,
     request: Request,
     response: Response,
     service_login: GetTokensService = Depends(get_tokens),
     add_login_information: Event = Depends(service_event)
-):
+) -> Response:
     """хэшируется пароль из login_data по алгоритму и сравнивается с тем, что есть в бд.
     если всё ок, то возвращаются access, refresh токены, добавляются данные о входе
     если пароль неверен, то 401"""
@@ -41,19 +41,19 @@ async def login_to_app(
             user_agent=f"login.{request.headers.get('user-agent')}"
             )
         await add_login_information.set(event)
-        return {"detail": "Successful login"}
+        return Response(status_code=status.HTTP_200_OK, content="Successful login")
     except AuthenticationIncorrect:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Invalid username or password")
 
 
-@router.post("/register")
+@router.post("/register", status_code=status.HTTP_200_OK, response_class=Response)
 async def register_user(
     reg_data: UserCreate,
     request: Request,
     reg_service: RegService = Depends(registation_tokens),
     add_login_information: Event = Depends(service_event)
-):
+) -> Response:
     try:
         user = UserCreate(username=reg_data.username, 
                           email=reg_data.email, password=reg_data.password)
@@ -72,7 +72,7 @@ async def register_user(
             user_agent=f"register.{request.headers.get('user-agent')}"
             )
         await add_login_information.set(event)
-        return {"detail": "Successful registration"}
+        return Response(status_code=status.HTTP_200_OK, content="Successful registration")
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="registration error")

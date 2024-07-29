@@ -1,4 +1,5 @@
 from fastapi import APIRouter, status, Depends, Response, Request
+from fastapi.responses import JSONResponse
 from services.logout import service_logout, BlockedToken
 from services.event import service_event, Event
 from schemas.event import EventCreate

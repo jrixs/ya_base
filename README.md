@@ -7,6 +7,9 @@
  - Андрей Николаев
  - Александра Волкова
 
+Задачи:
+https://github.com/jrixs/geral_async_API_sprint_1/issues?q=label%3Aauth6+is%3Aclosed
+
 ### Схема:
 ![architecture](https://github.com/user-attachments/assets/a4204f4b-03eb-406d-8a02-8634f56744ff)
 

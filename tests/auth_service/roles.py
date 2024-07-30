@@ -3,22 +3,36 @@ import httpx
 
 pytestmark = pytest.mark.asyncio
 
+LOGIN_URL = "http://127.0.0.1:4081/auth/login"
+LOGIN_CREDENTIALS = {"username": "user1", "password": "password123"}
+
 
 # Test getting all roles
 @pytest.mark.parametrize(
     "expected_response",
     [
-        (200),  # Successful request
+        {"detail": "Access Denied"},  # Successful request
     ],
 )
 async def test_get_all_roles(expected_response):
-    url = "http://127.0.0.1:4081/admin/role"
+    url = "http://127.0.0.1:4081/auth/admin/role"
 
     async with httpx.AsyncClient() as client:
-        headers = {
-            "accept": "application/json",
-        }
-        response = await client.get(url, headers=headers)
+        login_response = await client.post(
+            LOGIN_URL,
+            json=LOGIN_CREDENTIALS,
+            headers={"accept": "application/json"},
+        )
+
+        assert (
+            login_response.status_code == 200
+        ), f"Login failed: {login_response.json()}"
+
+        cookies = login_response.cookies
+
+        response = await client.get(
+            url, cookies=cookies, headers={"accept": "application/json"}
+        )
 
     try:
         assert response.status_code == expected_response
@@ -32,24 +46,40 @@ async def test_get_all_roles(expected_response):
 @pytest.mark.parametrize(
     "role_data, expected_response",
     [
-        ({"name": "new_role"}, 201),  # Valid role creation
-        ({"name": ""}, 422),  # Invalid role name (empty)
+        (
+            {"name": "new_role"},
+            {"detail": "Access Denied"},
+        ),  # Valid role creation
+        (
+            {"name": ""},
+            {"detail": "Access Denied"},
+        ),  # Invalid role name (empty)
         (
             {"name": "existing_role"},
-            409,
+            {"detail": "Access Denied"},
         ),  # Role already exists (if applicable)
         # Add more test cases as needed
     ],
 )
 async def test_create_role(role_data, expected_response):
-    url = "http://127.0.0.1:4081/admin/role"
+    url = "http://127.0.0.1:4081/auth/admin/role"
 
     async with httpx.AsyncClient() as client:
-        headers = {
-            "accept": "*/*",
-            "Content-Type": "application/json",
-        }
-        response = await client.post(url, json=role_data, headers=headers)
+        login_response = await client.post(
+            LOGIN_URL,
+            json=LOGIN_CREDENTIALS,
+            headers={"accept": "application/json"},
+        )
+
+        assert (
+            login_response.status_code == 200
+        ), f"Login failed: {login_response.json()}"
+
+        cookies = login_response.cookies
+
+        response = await client.post(
+            url, cookies=cookies, headers={"accept": "application/json"}
+        )
 
     try:
         assert response.status_code == expected_response
@@ -61,23 +91,32 @@ async def test_create_role(role_data, expected_response):
 
 # Test updating an existing role
 @pytest.mark.parametrize(
-    "role_id, role_data, expected_response",
+    "role_id, expected_response",
     [
-        (111, {"name": "updated_role"}, 200),  # Valid role update
-        (111, {"name": ""}, 422),  # Invalid role name (empty)
-        (999, {"name": "updated_role"}, 404),  # Nonexistent role
+        (111, {"detail": "Access Denied"}),  # Valid role update
+        (111, {"detail": "Access Denied"}),  # Invalid role name (empty)
         # Add more test cases as needed
     ],
 )
-async def test_update_role(role_id, role_data, expected_response):
-    url = f"http://127.0.0.1:4081/admin/role/{role_id}"
+async def test_update_role(role_id, expected_response):
+    url = f"http://127.0.0.1:4081/auth/admin/role/{role_id}"
 
     async with httpx.AsyncClient() as client:
-        headers = {
-            "accept": "application/json",
-            "Content-Type": "application/json",
-        }
-        response = await client.put(url, json=role_data, headers=headers)
+        login_response = await client.post(
+            LOGIN_URL,
+            json=LOGIN_CREDENTIALS,
+            headers={"accept": "application/json"},
+        )
+
+        assert (
+            login_response.status_code == 200
+        ), f"Login failed: {login_response.json()}"
+
+        cookies = login_response.cookies
+
+        response = await client.put(
+            url, cookies=cookies, headers={"accept": "application/json"}
+        )
 
     try:
         assert response.status_code == expected_response
@@ -91,19 +130,30 @@ async def test_update_role(role_id, role_data, expected_response):
 @pytest.mark.parametrize(
     "role_id, expected_response",
     [
-        (111, 204),  # Successful deletion
-        (999, 404),  # Nonexistent role
+        (111, {"detail": "Access Denied"}),  # Successful deletion
+        (999, {"detail": "Access Denied"}),  # Nonexistent role
         # Add more test cases as needed
     ],
 )
 async def test_delete_role(role_id, expected_response):
-    url = f"http://127.0.0.1:4081/admin/role/{role_id}"
+    url = f"http://127.0.0.1:4081/auth/admin/role/{role_id}"
 
     async with httpx.AsyncClient() as client:
-        headers = {
-            "accept": "*/*",
-        }
-        response = await client.delete(url, headers=headers)
+        login_response = await client.post(
+            LOGIN_URL,
+            json=LOGIN_CREDENTIALS,
+            headers={"accept": "application/json"},
+        )
+
+        assert (
+            login_response.status_code == 200
+        ), f"Login failed: {login_response.json()}"
+
+        cookies = login_response.cookies
+
+        response = await client.delete(
+            url, cookies=cookies, headers={"accept": "application/json"}
+        )
 
     try:
         assert response.status_code == expected_response

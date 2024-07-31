@@ -49,6 +49,7 @@ services:
       - "80:80"
     networks:
       - appnetwork
+      - authnetwork
     restart: unless-stopped
 
   elasticsearch:
@@ -122,6 +123,9 @@ services:
 networks:
   appnetwork:
     driver: bridge
+  authnetwork:
+    external: false
+    name: appnetwork_shared
 
 volumes:
   dbdata:

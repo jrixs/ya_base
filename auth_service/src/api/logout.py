@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status, Response, Request
 from fastapi.responses import JSONResponse
 
+
 from db.history import create_new_history_record
 from services.logout import LogoutService
 

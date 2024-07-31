@@ -41,7 +41,7 @@ def upgrade() -> None:
     op.create_table('user_history',
                     sa.Column('id', sa.String(length=36), nullable=False),
                     sa.Column('user_id', sa.String(length=36), nullable=False),
-                    sa.Column('last_logged_at', sa.DateTime(), nullable=False),
+                    sa.Column('last_logged_at', sa.DateTime(), nullable=True),
                     sa.Column('user_agent', sa.String(), nullable=False),
                     sa.ForeignKeyConstraint(['user_id'], ['auth_data.user_table.id'], ondelete='CASCADE'),
                     sa.PrimaryKeyConstraint('id'),

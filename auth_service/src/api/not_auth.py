@@ -1,7 +1,7 @@
 from fastapi import (APIRouter, status, HTTPException,
                      Depends, Response, Request)
-from fastapi.responses import JSONResponse
 
+from fastapi.responses import JSONResponse
 from core.dependencies import PGService
 from db.history import create_new_history_record
 from services.login import get_tokens, GetTokensService
@@ -41,6 +41,7 @@ async def login_to_app(
         response.set_cookie(key="username", value=tokens.username,
                             httponly=True, expires=settings.life_refresh_token
                             )
+
         await create_new_history_record(db_service, user_id=tokens.id,
                                         record_data=f"login.{request.headers.get('user-agent')}")
         return response

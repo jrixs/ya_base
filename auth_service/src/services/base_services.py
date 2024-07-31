@@ -65,7 +65,7 @@ class PostgresDB(DB):
 
     def select_one(self, statement):
         try:
-            data = self.session.execute(statement).one_or_none()
+            data = self.session.scalars(statement).one_or_none()
             return data
         except Exception as e:
             logger.error(e)

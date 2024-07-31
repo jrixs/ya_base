@@ -28,6 +28,11 @@ geral_async_API_sprint_1/tests/functional$ pytest
 geral_async_API_sprint_1/tests$ sudo docker compose up --abort-on-container-exit | grep tests
 ```
 
+### Запуск AUTH сорвиса.
+```bash
+geral_async_API_sprint_1/auth_service$ sudo docker compose up -d --build
+```
+
 ### Запуск всех сервисов.
 ```bash
 geral_async_API_sprint_1$ sudo docker compose up -d --build

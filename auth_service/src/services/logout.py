@@ -17,10 +17,10 @@ class BlockedToken(BaseService):
         super().__init__(db=db, storage=storage)
 
     async def blocked(self, user: UserData) -> bool:
-        await self._storage.redis.set(user.access_token, user.username,
-                                      settings.life_access_token)
-        await self._storage.redis.set(user.refresh_token, user.username,
-                                      settings.life_refresh_token)
+        await self._storage.set(user.access_token, user.username,
+                                settings.life_access_token)
+        await self._storage.set(user.refresh_token, user.username,
+                                settings.life_refresh_token)
 
         if self.blocked_token(user):
             return True

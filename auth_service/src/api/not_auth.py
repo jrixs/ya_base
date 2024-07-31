@@ -1,5 +1,6 @@
 from fastapi import (APIRouter, status, HTTPException,
                      Depends, Response, Request, Form)
+from fastapi.responses import JSONResponse
 from services.login import get_tokens, GetTokensService
 from services.event import service_event, Event
 from schemas.login import LoginRequest
@@ -26,6 +27,9 @@ async def login_to_app(
     если всё ок, то возвращаются access, refresh токены, добавляются данные о входе
     если пароль неверен, то 401"""
     try:
+        response = JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"detail": "Successful login"})
         tokens: UserData = await service_login.get(login_data)
         response.set_cookie(key="access", value=tokens.access_token,
                             httponly=True, expires=settings.life_access_token
@@ -41,10 +45,11 @@ async def login_to_app(
             user_agent=f"login.{request.headers.get("user-agent")}"
             )
         await add_login_information.set(event)
-        return {"detail": "Successful login"}
+        return response
     except AuthenticationIncorrect:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid username or password")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Invalid username or password"})
 
 
 @router.post("/register")

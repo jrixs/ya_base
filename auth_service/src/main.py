@@ -1,15 +1,15 @@
-from contextlib import asynccontextmanager
 import logging
-
-from api import not_auth_router, auth_router, admin_router
-from core.exception import global_exception_handler
-from core.config import settings
-from core import connections
-from fastapi.responses import ORJSONResponse
-from redis.asyncio import Redis
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import ORJSONResponse
+from redis.asyncio import Redis
+
+from api import admin_router, auth_router, not_auth_router
+from core import connections
+from core.config import settings
+from core.exception import global_exception_handler
 
 logger = logging.getLogger()
 
@@ -17,8 +17,11 @@ logger = logging.getLogger()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     connections.engine.connect()
+    connections.redis_connect = Redis(
+        host=settings.redis_host, port=settings.redis_port)
     yield
     connections.engine.dispose()
+    await connections.redis_connect.close()
 
 
 app = FastAPI(
@@ -33,19 +36,10 @@ app = FastAPI(
     # Можно сразу сделать небольшую оптимизацию сервиса
     # и заменить стандартный JSON-сериализатор на более шуструю версию, написанную на Rust
     default_response_class=ORJSONResponse,
-    exception_handlers={Exception: global_exception_handler}
+    exception_handlers={Exception: global_exception_handler},
+    lifespan=lifespan
 )
 
-
-@app.router.on_startup.append
-async def startup():
-    connections.redis_connect = Redis(
-        host=settings.redis_host, port=settings.redis_port)
-
-
-@app.router.on_shutdown.append
-async def shutdown():
-    await connections.redis_connect.close()
 
 origins = settings.origins
 

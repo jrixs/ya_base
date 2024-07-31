@@ -10,8 +10,7 @@ services:
       PGDATA: /var/lib/postgresql/data/movies_auth
       POSTGRES_DB: movies_auth
       POSTGRES_USER: auth
-      POSTGRES_PASSWORD: 123qwe
-      #POSTGRES_PASSWORD_FILE: /run/secrets/db_pass
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_pass
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app"]
       interval: 10s
@@ -20,8 +19,6 @@ services:
       start_period: 3s
     expose:
       - "5432"
-    ports:
-      - "5432:5432"
     networks:
       - authnetwork
     restart: unless-stopped
@@ -31,8 +28,6 @@ services:
     image: redis:7.2.5
     networks:
       - authnetwork
-    ports:
-      - "6379:6379"
     restart: unless-stopped
   
   auth1: &base-auth
@@ -40,8 +35,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      - DB_HOST=auth_db
+    # environment:
+    #   - DB_HOST=auth_db
     volumes:
       - ./src:/src
     depends_on:
@@ -51,18 +46,19 @@ services:
       - authnetwork
     expose:
       - 4081/tcp
-    ports:
-      - "4081:4081"
     restart: unless-stopped
+    entrypoint: >
+        sh -c "alembic upgrade head"
     #command: sh -cx "alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
-    command: sh -cx "alembic downgrade base && alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
+    #         sh -cx "alembic downgrade base && alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
+    command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app
 
-  # auth2: 
-  #   <<: *base-auth
-  #   container_name: auth2
-  #   expose:
-  #     - 4082/tcp
-  #   command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4082 --log-config /src/core/logger --log-level info main:app
+  auth2: 
+    <<: *base-auth
+    container_name: auth2
+    expose:
+      - 4082/tcp
+    command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4082 --log-config /src/core/logger --log-level info main:app
 
 networks:
   authnetwork:

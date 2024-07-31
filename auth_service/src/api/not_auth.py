@@ -1,5 +1,6 @@
 from fastapi import (APIRouter, status, HTTPException,
                      Depends, Response, Request)
+from fastapi.responses import JSONResponse
 
 from core.dependencies import PGService
 from db.history import create_new_history_record
@@ -27,6 +28,9 @@ async def login_to_app(
     если всё ок, то возвращаются access, refresh токены, добавляются данные о входе
     если пароль неверен, то 401"""
     try:
+        response = JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"detail": "Successful login"})
         tokens: UserData = await service_login.get(login_data)
         response.set_cookie(key="access", value=tokens.access_token,
                             httponly=True, expires=settings.life_access_token
@@ -39,10 +43,11 @@ async def login_to_app(
                             )
         await create_new_history_record(db_service, user_id=tokens.id,
                                         record_data=f"login.{request.headers.get('user-agent')}")
-        return Response(status_code=status.HTTP_200_OK, content="Successful login")
+        return response
     except AuthenticationIncorrect:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid username or password")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Invalid username or password"})
 
 
 @router.post("/register", status_code=status.HTTP_200_OK, response_class=Response)

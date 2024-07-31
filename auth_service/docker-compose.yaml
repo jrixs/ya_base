@@ -35,8 +35,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    volumes:
-      - ./src:/src
     depends_on:
       - auth_db
       - auth_redis

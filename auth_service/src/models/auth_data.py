@@ -13,7 +13,7 @@ class User(Base):
     __table_args__ = {"schema": "auth_data"}
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    username: Mapped[str] = mapped_column(String(50))
+    username: Mapped[str] = mapped_column(String(50), unique=True)
     email: Mapped[str] = mapped_column(String(320), unique=True)
     role_id: Mapped[str] = mapped_column(String(36), ForeignKey("auth_service.role_table.id", ondelete="SET NULL"),
                                          nullable=True)

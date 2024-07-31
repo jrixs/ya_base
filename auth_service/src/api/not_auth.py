@@ -1,15 +1,16 @@
 from fastapi import (APIRouter, status, HTTPException,
-                     Depends, Response, Request, Form)
+                     Depends, Response, Request)
 from fastapi.responses import JSONResponse
+
+from core.dependencies import PGService
+from db.history import create_new_history_record
 from services.login import get_tokens, GetTokensService
-from services.event import service_event, Event
 from schemas.login import LoginRequest
 from schemas.user import UserData
-from core.exception import AuthenticationIncorrect
+from core.exception import AuthenticationIncorrect, UserExistConflict, UserRolesAreNotCreated
 from schemas.user import UserCreate
 from services.registration import RegService, registation_tokens
 from core.config import settings
-from schemas.event import EventCreate
 from pydantic import ValidationError
 
 router = APIRouter()
@@ -17,11 +18,11 @@ router = APIRouter()
 
 @router.post("/login", status_code=status.HTTP_200_OK, response_class=Response)
 async def login_to_app(
-    login_data: LoginRequest,
-    request: Request,
-    response: Response,
-    service_login: GetTokensService = Depends(get_tokens),
-    add_login_information: Event = Depends(service_event)
+        db_service: PGService,
+        login_data: LoginRequest,
+        request: Request,
+        response: Response,
+        service_login: GetTokensService = Depends(get_tokens)
 ) -> Response:
     """хэшируется пароль из login_data по алгоритму и сравнивается с тем, что есть в бд.
     если всё ок, то возвращаются access, refresh токены, добавляются данные о входе
@@ -40,11 +41,8 @@ async def login_to_app(
         response.set_cookie(key="username", value=tokens.username,
                             httponly=True, expires=settings.life_refresh_token
                             )
-        event = EventCreate(
-            user_id=tokens.id,
-            user_agent=f"login.{request.headers.get('user-agent')}"
-            )
-        await add_login_information.set(event)
+        await create_new_history_record(db_service, user_id=tokens.id,
+                                        record_data=f"login.{request.headers.get('user-agent')}")
         return response
     except AuthenticationIncorrect:
         return JSONResponse(
@@ -54,30 +52,26 @@ async def login_to_app(
 
 @router.post("/register", status_code=status.HTTP_200_OK, response_class=Response)
 async def register_user(
-    reg_data: UserCreate,
-    request: Request,
-    reg_service: RegService = Depends(registation_tokens),
-    add_login_information: Event = Depends(service_event)
+        db_service: PGService,
+        reg_data: UserCreate,
+        request: Request,
+        reg_service: RegService = Depends(registation_tokens),
 ) -> Response:
     try:
-        user = UserCreate(username=reg_data.username, 
+        user = UserCreate(username=reg_data.username,
                           email=reg_data.email, password=reg_data.password)
-    except ValidationError:
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid email")
-    exist_user = await reg_service.check_user(user=user)
-    if exist_user:
+        await reg_service.check_user(user=user)
+        registered = await reg_service.create_user(user=user)
+        await create_new_history_record(db_service, user_id=registered.id,
+                                        record_data=f"register.{request.headers.get('user-agent')}")
+        return Response(status_code=status.HTTP_200_OK, content="Successful registration")
+    except UserExistConflict:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User_already_exist")
-
-    registered = await reg_service.create_user(user=user)
-    if registered:
-        event = EventCreate(
-            user_id=registered.id,
-            user_agent=f"register.{request.headers.get('user-agent')}"
-            )
-        await add_login_information.set(event)
-        return Response(status_code=status.HTTP_200_OK, content="Successful registration")
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="registration error")
+            detail="User already exist")
+    except ValidationError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email")
+    except (UserRolesAreNotCreated, Exception):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Registration error")

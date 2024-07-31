@@ -18,7 +18,11 @@ class DB(ABC):
         ...
 
     @abstractmethod
-    async def select(self, *args, **kwargs) -> Any | None:
+    async def select_one(self, *args, **kwargs) -> Any | None:
+        ...
+
+    @abstractmethod
+    async def select_few(self, *args, **kwargs) -> Any | None:
         ...
 
     @abstractmethod

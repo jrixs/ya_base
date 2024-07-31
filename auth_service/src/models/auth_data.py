@@ -35,7 +35,7 @@ class History(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("auth_data.user_table.id", ondelete="CASCADE"))
-    last_logged_at: Mapped[datetime] = mapped_column(DateTime)
+    last_logged_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     user_agent: Mapped[str] = mapped_column(String)
 
     user: Mapped["User"] = relationship(back_populates="history")

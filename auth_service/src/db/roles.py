@@ -21,7 +21,7 @@ async def get_all_roles(db_service: PostgresDB) -> list[RoleResponse]:
 
 async def get_guest_role_id(db_service: PostgresDB) -> str:
     statement = select(Role.id).where(Role.name == "guest")
-    role_id = db_service.select_one(statement)[0]
+    role_id = db_service.select_one(statement)
     return role_id
 
 

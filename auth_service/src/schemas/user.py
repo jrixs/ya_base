@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from uuid import UUID
 from datetime import datetime
 
@@ -14,8 +14,8 @@ class UserResponse(BaseModel):
     username: str
     email: EmailStr
     role_id: UUID
-    joined_at: str
-    updated_at: str
+    joined_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True
@@ -25,6 +25,7 @@ class UserResponse(BaseModel):
 
 
 class UserData(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: str
     username: str
     email: EmailStr
@@ -34,35 +35,21 @@ class UserData(BaseModel):
     refresh_token: str | None = None
 
 
-class RegistrationRequest(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-
-class RegistrationResponse(BaseModel):
-    id: UUID
-    access_token: str
-    refresh_token: str
-
-
 class BasePagination(BaseModel):
-    limit: int = 0
-    offset: int = 0
+    limit: int = Field(default=10, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
 
 
 class UserHistory(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     last_logged_at: datetime
     user_agent: str
 
 
 class UserHistoryResponse(BaseModel):
-    total_count: int
-    data: list[UserHistory]
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    history: list[UserHistory]
+    total: int
 
-
-class UserChange(BaseModel):
-    username: str
-    email: EmailStr
-    password: str

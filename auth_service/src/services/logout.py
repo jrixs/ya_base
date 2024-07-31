@@ -1,14 +1,14 @@
-from core.connections import get_redis
-from core.connections import get_session, SessionLocal
-from redis.asyncio import Redis
+from typing import Annotated
+
+from fastapi import Depends
+
+from core.dependencies import RedisSession, DBSession
 from services.base_services import (
     BaseService, RedisStorage,
     PostgresDB, DB, Storage
-    )
+)
 from schemas.user import UserData
 from core.config import settings
-
-from fastapi import Depends
 
 
 class BlockedToken(BaseService):
@@ -34,8 +34,11 @@ class BlockedToken(BaseService):
 
 
 def service_logout(
-    redis: Redis = Depends(get_redis),
-    session: SessionLocal = Depends(get_session),
+        redis: RedisSession,
+        session: DBSession,
 ) -> BlockedToken:
     return BlockedToken(db=PostgresDB(session),
                         storage=RedisStorage(redis))
+
+
+LogoutService = Annotated[BlockedToken, Depends(service_logout)]

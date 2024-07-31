@@ -1,6 +1,5 @@
-from core.connections import get_redis
-from core.connections import get_session, SessionLocal
-from redis.asyncio import Redis
+from core.dependencies import RedisSession, DBSession
+from db.roles import get_one_role
 from services.base_services import (
     BaseService, RedisStorage,
     PostgresDB, DB, Storage
@@ -8,8 +7,6 @@ from services.base_services import (
 from schemas.user import UserData
 from schemas.verify import VerifyToken
 from core.jwt import verify_token, get_secret_key
-from fastapi import Depends
-from models.auth_service import Role
 
 
 class GetVerify(BaseService):
@@ -29,14 +26,13 @@ class GetVerify(BaseService):
 
         # Получение роли
         user = UserData(**data)
-        user_role = self._db.session.query(Role).filter(
-            Role.id == user.role_id).one_or_none()
+        user_role = await get_one_role(self._db, user.role_id)
         return user_role.name == token.role_name
 
 
 def get_verify(
-    redis: Redis = Depends(get_redis),
-    session: SessionLocal = Depends(get_session),
+        redis: RedisSession,
+        session: DBSession,
 ) -> GetVerify:
     return GetVerify(db=PostgresDB(session),
                      storage=RedisStorage(redis))

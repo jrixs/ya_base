@@ -12,7 +12,7 @@ class Secret(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("auth_data.user_table.id", ondelete="CASCADE"))
     password: Mapped[str] = mapped_column(String)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, onupdate=datetime.utcnow, nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="secret")
 

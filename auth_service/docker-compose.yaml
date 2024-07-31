@@ -35,8 +35,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # environment:
-    #   - DB_HOST=auth_db
     volumes:
       - ./src:/src
     depends_on:
@@ -47,22 +45,20 @@ services:
     expose:
       - 4081/tcp
     restart: unless-stopped
-    entrypoint: >
-        sh -c "alembic upgrade head"
-    #command: sh -cx "alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
-    #         sh -cx "alembic downgrade base && alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app"
-    command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-config /src/core/logger --log-level info main:app
+    command: sh -c "alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-level info main:app"
 
   auth2: 
     <<: *base-auth
     container_name: auth2
     expose:
       - 4082/tcp
-    command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4082 --log-config /src/core/logger --log-level info main:app
+    command: gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4082 --log-level info main:app
 
 networks:
   authnetwork:
-    driver: bridge
+    external: false
+    name: appnetwork_shared
+    
 
 volumes:
   dbauth:

@@ -1,4 +1,3 @@
-import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -10,8 +9,6 @@ from api import admin_router, auth_router, not_auth_router
 from core import connections
 from core.config import settings
 from core.exception import global_exception_handler
-
-logger = logging.getLogger()
 
 
 @asynccontextmanager
@@ -39,7 +36,6 @@ app = FastAPI(
     exception_handlers={Exception: global_exception_handler},
     lifespan=lifespan
 )
-
 
 origins = settings.origins
 

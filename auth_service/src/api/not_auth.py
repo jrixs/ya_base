@@ -2,6 +2,9 @@ from fastapi import (APIRouter, status, HTTPException,
                      Depends, Response, Request)
 
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+from loguru import logger
+
 from core.dependencies import PGService
 from db.history import create_new_history_record
 from services.login import get_tokens, GetTokensService
@@ -11,7 +14,7 @@ from core.exception import AuthenticationIncorrect, UserExistConflict, UserRoles
 from schemas.user import UserCreate
 from services.registration import RegService, registation_tokens
 from core.config import settings
-from pydantic import ValidationError
+
 
 router = APIRouter()
 
@@ -72,7 +75,8 @@ async def register_user(
             detail="User already exist")
     except ValidationError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email")
-    except (UserRolesAreNotCreated, Exception):
+    except (UserRolesAreNotCreated, Exception) as exc:
+        logger.info(f"Exception: {exc}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Registration error")

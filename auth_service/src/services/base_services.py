@@ -2,7 +2,8 @@
 from redis.asyncio import Redis
 from abc import ABC, abstractmethod
 from typing import Any
-from sqlalchemy.orm import Session
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from loguru import logger
 
@@ -32,53 +33,54 @@ class DB(ABC):
 
 class PostgresDB(DB):
 
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def insert(self, obj) -> Any | None:
+    async def insert(self, obj) -> Any | None:
         try:
             self.session.add(obj)
-            self.session.commit()
+            await self.session.commit()
+            await self.session.refresh(obj)
             return obj
         except Exception as e:
             logger.error(e)
-            self.session.rollback()
+            await self.session.rollback()
             return
 
-    def update(self, statement) -> Any:
+    async def update(self, statement) -> Any:
         try:
-            data = self.session.execute(statement)
-            self.session.commit()
+            data = await self.session.execute(statement)
+            await self.session.commit()
             return data
         except Exception as e:
             logger.error(e)
-            self.session.rollback()
+            await self.session.rollback()
             return False
 
-    def select_few(self, statement):
+    async def select_few(self, statement):
         try:
-            data = self.session.execute(statement).all()
-            return data
+            data = await self.session.execute(statement)
+            return data.all()
         except Exception as e:
             logger.error(e)
             return
 
-    def select_one(self, statement):
+    async def select_one(self, statement):
         try:
-            data = self.session.scalars(statement).one_or_none()
-            return data
+            data = await self.session.scalars(statement)
+            return data.one_or_none()
         except Exception as e:
             logger.error(e)
             return
 
-    def delete(self, statement):
+    async def delete(self, statement):
         try:
-            self.session.execute(statement)
-            self.session.commit()
+            await self.session.execute(statement)
+            await self.session.commit()
             return True
         except Exception as e:
             logger.error(e)
-            self.session.rollback()
+            await self.session.rollback()
             return False
 
 

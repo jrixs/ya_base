@@ -22,7 +22,7 @@ class BlockedToken(BaseService):
         await self._storage.set(user.refresh_token, user.username,
                                 settings.life_refresh_token)
 
-        if self.blocked_token(user):
+        if await self.blocked_token(user):
             return True
         return False
 

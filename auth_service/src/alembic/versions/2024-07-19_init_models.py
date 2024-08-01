@@ -21,6 +21,12 @@ def upgrade() -> None:
     op.create_table('role_table',
                     sa.Column('id', sa.String(length=36), nullable=False),
                     sa.Column('name', sa.String(length=50), nullable=False),
+                    sa.Column('create_access', sa.Boolean(), server_default='False', nullable=True),
+                    sa.Column('update_access', sa.Boolean(), server_default='False', nullable=True),
+                    sa.Column('view_access', sa.Boolean(), server_default='False', nullable=True),
+                    sa.Column('delete_access', sa.Boolean(), server_default='False', nullable=True),
+                    sa.Column('updated_at', sa.DateTime(), nullable=True),
+                    sa.Column('created_at', sa.DateTime(), nullable=False),
                     sa.PrimaryKeyConstraint('id'),
                     schema='auth_service'
                     )

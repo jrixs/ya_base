@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import HTTPException, status, Depends, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
 from core.connections import get_session
@@ -25,7 +25,7 @@ from core.jwt import (
 
 from services.base_services import PostgresDB
 
-DBSession = Annotated[Session, Depends(get_session)]
+DBSession = Annotated[AsyncSession, Depends(get_session)]
 RedisSession = Annotated[Redis, Depends(get_redis)]
 
 
@@ -39,7 +39,7 @@ def init_postgres_service(db_session: DBSession) -> PostgresDB:
 PGService = Annotated[PostgresDB, Depends(init_postgres_service)]
 
 
-def verify_user_access(
+async def verify_user_access(
         request: Request,
         redis: RedisSession,
 ) -> UserData:
@@ -49,10 +49,10 @@ def verify_user_access(
 
     try:
         """здесь добавить поход в редис и проверку на протухший токен, если протух, то 401"""
-        check_tokens_in_blocklist(access_token, refresh_token, redis)
-    except AccessTokenBlocked as err:
+        await check_tokens_in_blocklist(access_token, refresh_token, redis)
+    except (AccessTokenBlocked, Exception) as err:
         raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail=err
+                status_code=status.HTTP_401_UNAUTHORIZED, detail=str(err)
             )
 
     try:
@@ -78,7 +78,7 @@ def verify_user_access(
 VerifiedUser = Annotated[UserData, Depends(verify_user_access)]
 
 
-def verify_user_admin_rights(user_data: VerifiedUser) -> UserData:
+async def verify_user_admin_rights(user_data: VerifiedUser) -> UserData:
     if user_data.is_superuser:
         return user_data
     else:

@@ -13,12 +13,12 @@ async def create_new_history_record(db_service: PostgresDB, user_id: str, record
         user_id=user_id,
         user_agent=record_data
     )
-    db_service.insert(db_event)
+    await db_service.insert(db_event)
 
 
 async def get_history_by_user(db_service: PostgresDB, user_id: str, pagination: BasePagination) -> UserHistoryResponse:
     statement = select(History).where(History.user_id == user_id).order_by(History.last_logged_at.desc()).offset(
         pagination.offset * pagination.limit).limit(pagination.limit)
-    history_data = db_service.select_few(statement)
+    history_data = await db_service.select_few(statement)
     history_list = [UserHistory.model_validate(item) for item in history_data]
     return UserHistoryResponse(id=user_id, history=history_list, total=len(history_list))

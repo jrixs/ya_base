@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         return f'postgresql+psycopg2://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}'
 
+    @property
+    def database_async_url(self) -> str:
+        return f'postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}'
+
 
 @lru_cache
 def get_config() -> Settings:

@@ -11,4 +11,4 @@ class RoleRequest(BaseModel):
 
 class RoleResponse(RoleRequest):
     model_config = ConfigDict(from_attributes=True)
-    id: int
+    id: str

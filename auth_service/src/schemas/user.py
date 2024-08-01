@@ -10,6 +10,7 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, json_encoders={datetime: lambda v: v.isoformat()})
     id: UUID
     username: str
     email: EmailStr
@@ -17,19 +18,13 @@ class UserResponse(BaseModel):
     joined_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-        }
-
 
 class UserData(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     username: str
     email: EmailStr
-    role_id: str
+    role_id: str | None
     is_superuser: bool
     access_token: str | None = None
     refresh_token: str | None = None

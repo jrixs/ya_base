@@ -43,7 +43,7 @@ services:
     expose:
       - 4081/tcp
     restart: unless-stopped
-    command: sh -c "alembic upgrade head && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-level info main:app"
+    command: sh -c "alembic upgrade head && python3 superuser_add.py && gunicorn -w 3 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:4081 --log-level info main:app"
 
   auth2: 
     <<: *base-auth

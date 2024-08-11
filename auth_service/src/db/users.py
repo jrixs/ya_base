@@ -20,6 +20,10 @@ async def get_one_user_by_username(db_service: PostgresDB, username: str) -> Use
     statement = select(User).where(User.username == username).options(joinedload(User.secret))
     return await db_service.select_one(statement)
 
+async def get_one_user_by_email(db_service: PostgresDB, email: str) -> User:
+    statement = select(User).where(User.email == email).options(joinedload(User.secret))
+    return await db_service.select_one(statement)
+
 
 async def update_user_role(db_service: PostgresDB, user_uuid: str, role_uuid: str) -> UserResponse:
     statement = update(User).where(User.id == user_uuid).values(role_id=role_uuid).returning(User)

@@ -39,6 +39,25 @@ class GetTokensService(BaseService):
                 data.refresh_token = refresh_token
                 return data
         raise AuthenticationIncorrect
+    
+    async def get_from_email(self, auth: LoginRequest) -> Optional[UserData]:
+        user = await users.get_one_user_by_email(self._db, auth.username)
+        if user:
+            data = UserData.model_validate(user)
+            access_token = create_token(
+                payload=data.model_dump(),
+                secret_key=get_secret_key(data.username),
+                expires_in=settings.life_access_token
+            )
+            refresh_token = create_token(
+                payload=data.model_dump(),
+                secret_key=get_secret_key(data.username),
+                expires_in=settings.life_refresh_token
+            )
+            data.access_token = access_token
+            data.refresh_token = refresh_token
+            return data
+        raise AuthenticationIncorrect
 
 
 def get_tokens(
